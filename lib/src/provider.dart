@@ -147,24 +147,6 @@ class Provider<T> extends InheritedProvider<T> {
   /// )
   /// ```
   static T of<T>(BuildContext context, {bool listen = true}) {
-    assert(
-      listen == false || debugIsInInheritedProviderUpdate,
-      '''
-Tried to listen to a value exposed with provider, from outside of the widget tree.
-
-This is likely caused by an event handler (like a button's onPressed) that called
-Provider.of without passing `listen: false`.
-
-To fix, write:
-Provider.of<$T>(context, listen: false);
-
-It is unsupported because may pointlessly rebuild the widget associated to the
-event handler, when the widget tree doesn't care about the value.
-
-The context used was: $context
-''',
-    );
-
     final inheritedElement = _inheritedElementOf<T>(context);
 
     if (listen) {
