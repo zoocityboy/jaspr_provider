@@ -27,7 +27,7 @@ class ListenableProvider<T extends Listenable?> extends InheritedProvider<T> {
     required Create<T> create,
     Dispose<T>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -44,7 +44,7 @@ class ListenableProvider<T extends Listenable?> extends InheritedProvider<T> {
     Key? key,
     required T value,
     UpdateShouldNotify<T>? updateShouldNotify,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super.value(
           key: key,
@@ -75,7 +75,7 @@ class ListenableProxyProvider0<R extends Listenable?>
     Dispose<R>? dispose,
     UpdateShouldNotify<R>? updateShouldNotify,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -112,7 +112,7 @@ class ListenableProxyProvider<T, R extends Listenable?>
     required ProxyProviderBuilder<T, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -139,7 +139,7 @@ class ListenableProxyProvider2<T, T2, R extends Listenable?>
     required ProxyProviderBuilder2<T, T2, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -167,7 +167,7 @@ class ListenableProxyProvider3<T, T2, T3, R extends Listenable?>
     required ProxyProviderBuilder3<T, T2, T3, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -196,7 +196,7 @@ class ListenableProxyProvider4<T, T2, T3, T4, R extends Listenable?>
     required ProxyProviderBuilder4<T, T2, T3, T4, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -226,7 +226,7 @@ class ListenableProxyProvider5<T, T2, T3, T4, T5, R extends Listenable?>
     required ProxyProviderBuilder5<T, T2, T3, T4, T5, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -257,7 +257,7 @@ class ListenableProxyProvider6<T, T2, T3, T4, T5, T6, R extends Listenable?>
     required ProxyProviderBuilder6<T, T2, T3, T4, T5, T6, R> update,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,

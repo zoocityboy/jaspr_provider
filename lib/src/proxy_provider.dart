@@ -77,7 +77,7 @@ class ProxyProvider0<R> extends InheritedProvider<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -150,7 +150,7 @@ class ProxyProvider<T, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -178,7 +178,7 @@ class ProxyProvider2<T, T2, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -207,7 +207,7 @@ class ProxyProvider3<T, T2, T3, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -237,7 +237,7 @@ class ProxyProvider4<T, T2, T3, T4, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -268,7 +268,7 @@ class ProxyProvider5<T, T2, T3, T4, T5, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -300,7 +300,7 @@ class ProxyProvider6<T, T2, T3, T4, T5, T6, R> extends ProxyProvider0<R> {
     UpdateShouldNotify<R>? updateShouldNotify,
     Dispose<R>? dispose,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,

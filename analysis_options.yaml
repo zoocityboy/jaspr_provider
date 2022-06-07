@@ -2,8 +2,6 @@ include: all_lint_rules.yaml
 analyzer:
   exclude:
     - "**/*.g.dart"
-    # - "**/**_test.dart"
-    - "test/**"
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false

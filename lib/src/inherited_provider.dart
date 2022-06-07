@@ -51,7 +51,7 @@ typedef StartListening<T> = VoidCallback Function(
 ///
 ///  - [DeferredInheritedProvider], a variant of this object where the provided
 ///    object and the created object are two different entity.
-class InheritedProvider<T> extends StatelessComponent {
+class InheritedProvider<T> extends SingleChildStatelessComponent {
   /// Creates a value, then expose it to its descendants.
   ///
   /// The value will be disposed of when [InheritedProvider] is removed from
@@ -66,7 +66,7 @@ class InheritedProvider<T> extends StatelessComponent {
     Dispose<T>? dispose,
     this.builder,
     bool? lazy,
-    this.child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = _CreateInheritedProvider(
           create: create,
@@ -76,7 +76,7 @@ class InheritedProvider<T> extends StatelessComponent {
           startListening: startListening,
           dispose: dispose,
         ),
-        super(key: key);
+        super(key: key, child: child);
 
   /// Expose to its descendants an existing value,
   InheritedProvider.value({
@@ -86,24 +86,24 @@ class InheritedProvider<T> extends StatelessComponent {
     StartListening<T>? startListening,
     bool? lazy,
     this.builder,
-    this.child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = _ValueInheritedProvider(
           value: value,
           updateShouldNotify: updateShouldNotify,
           startListening: startListening,
         ),
-        super(key: key);
+        super(key: key, child: child);
 
   InheritedProvider._constructor({
     Key? key,
     required _Delegate<T> delegate,
     bool? lazy,
     this.builder,
-    this.child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = delegate,
-        super(key: key);
+        super(key: key, child: child);
 
   final _Delegate<T> _delegate;
   final bool? _lazy;
@@ -139,10 +139,7 @@ class InheritedProvider<T> extends StatelessComponent {
   ///
   /// For an explanation on the `child` parameter that `builder` receives,
   /// see the "Performance optimizations" section of fluter's `AnimatedBuilder`.
-  final ComponentBuilder? builder;
-
-  /// Component which will be passed to the [builder].
-  final Component? child;
+  final TransitionBuilder? builder;
 
   @override
   _InheritedProviderElement<T> createElement() {
@@ -150,7 +147,8 @@ class InheritedProvider<T> extends StatelessComponent {
   }
 
   @override
-  Iterable<Component> build(BuildContext context) sync* {
+  Iterable<Component> buildWithChild(BuildContext context, Component? child) sync* {
+    final builder = this.builder;
     assert(
       builder != null || child != null,
       '$runtimeType used outside of MultiProvider must specify a child',
@@ -161,14 +159,14 @@ class InheritedProvider<T> extends StatelessComponent {
       debugType: kDebugMode ? '$runtimeType' : '',
       child: builder != null
           ? Builder(
-              builder: (context) => builder!(context),
+              builder: (context) => builder(context, child),
             )
           : child!,
     );
   }
 }
 
-class _InheritedProviderElement<T> extends StatelessElement {
+class _InheritedProviderElement<T> extends SingleChildStatelessElement {
   _InheritedProviderElement(InheritedProvider<T> widget) : super(widget);
 }
 
@@ -804,3 +802,13 @@ class _ValueInheritedProviderState<T> extends _DelegateState<T, _ValueInheritedP
   @override
   bool get hasValue => true;
 }
+
+/// A builder that builds a widget given a child.
+///
+/// The child should typically be part of the returned widget tree.
+///
+///
+/// See also:
+///
+///  * [ComponentBuilder], which is similar but only takes a [BuildContext].
+typedef TransitionBuilder = Iterable<Component> Function(BuildContext context, Component? child);

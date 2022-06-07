@@ -79,7 +79,7 @@ class StreamProvider<T> extends DeferredInheritedProvider<Stream<T>?, T> {
     ErrorBuilder<T>? catchError,
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -102,7 +102,7 @@ class StreamProvider<T> extends DeferredInheritedProvider<Stream<T>?, T> {
     ErrorBuilder<T>? catchError,
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super.value(
           key: key,
@@ -179,7 +179,7 @@ class FutureProvider<T> extends DeferredInheritedProvider<Future<T>?, T> {
     ErrorBuilder<T>? catchError,
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super(
           key: key,
@@ -201,7 +201,7 @@ class FutureProvider<T> extends DeferredInheritedProvider<Future<T>?, T> {
     required T initialData,
     ErrorBuilder<T>? catchError,
     UpdateShouldNotify<T>? updateShouldNotify,
-    ComponentBuilder? builder,
+    TransitionBuilder? builder,
     Component? child,
   }) : super.value(
           key: key,
