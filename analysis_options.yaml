@@ -12,6 +12,8 @@ analyzer:
     included_file_warning: ignore
 linter:
   rules:
+    
+    # Sometimes it is useful to have a one member class to implement it
     one_member_abstracts: false
 
     # Personal preference. I don't find it more readable
