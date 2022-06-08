@@ -29,7 +29,6 @@ export 'src/provider.dart'
         InheritedProvider,
         MultiProvider,
         Provider,
-        ProviderBinding,
         ProviderNotFoundException,
         ProviderNullException,
         Create,
