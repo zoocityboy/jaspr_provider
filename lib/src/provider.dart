@@ -206,8 +206,10 @@ class Provider<T> extends InheritedProvider<T> {
           builder: builder,
           create: create,
           dispose: dispose,
-          debugCheckInvalidValueType:
-              kReleaseMode ? null : (T value) => Provider.debugCheckInvalidValueType?.call<T>(value),
+          debugCheckInvalidValueType: kReleaseMode
+              ? null
+              : (T value) =>
+                  Provider.debugCheckInvalidValueType?.call<T>(value),
           child: child,
         );
 
@@ -263,7 +265,8 @@ class Provider<T> extends InheritedProvider<T> {
       // We have to use this method instead of dependOnInheritedElement, because
       // dependOnInheritedElement does not support relocating using GlobalKey
       // if no provider were found previously.
-      context.dependOnInheritedComponentOfExactType<_InheritedProviderScope<T?>>();
+      context
+          .dependOnInheritedComponentOfExactType<_InheritedProviderScope<T?>>();
     }
 
     final value = inheritedElement?.value;
@@ -302,8 +305,8 @@ If you want to expose a variable that can be anything, consider changing
 `dynamic` to `Object` instead.
 ''',
     );
-    final inheritedElement = context.getElementForInheritedComponentOfExactType<_InheritedProviderScope<T?>>()
-        as _InheritedProviderScopeElement<T?>?;
+    final inheritedElement = context.getElementForInheritedComponentOfExactType<
+        _InheritedProviderScope<T?>>() as _InheritedProviderScopeElement<T?>?;
 
     if (inheritedElement == null && null is! T) {
       throw ProviderNotFoundException(T, context.component.runtimeType);

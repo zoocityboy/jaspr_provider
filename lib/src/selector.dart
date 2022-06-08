@@ -74,8 +74,10 @@ class _Selector0State<T> extends SingleChildState<Selector0<T>> {
     final selected = component.selector(context);
 
     final shouldInvalidateCache = oldComponent != component ||
-        (component._shouldRebuild != null && component._shouldRebuild!(value as T, selected)) ||
-        (component._shouldRebuild == null && !const DeepCollectionEquality().equals(value, selected));
+        (component._shouldRebuild != null &&
+            component._shouldRebuild!(value as T, selected)) ||
+        (component._shouldRebuild == null &&
+            !const DeepCollectionEquality().equals(value, selected));
     if (shouldInvalidateCache) {
       value = selected;
       oldComponent = component;

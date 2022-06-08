@@ -69,7 +69,8 @@ class ValueListenableProvider<T> extends StatelessComponent {
 ///
 ///  * [ValueListenableBuilder], a component which invokes this builder each time
 ///    a [ValueListenable] changes value.
-typedef ValueComponentBuilder<T> = Iterable<Component> Function(BuildContext context, T value, Component? child);
+typedef ValueComponentBuilder<T> = Iterable<Component> Function(
+    BuildContext context, T value, Component? child);
 
 /// A component whose content stays synced with a [ValueListenable].
 ///

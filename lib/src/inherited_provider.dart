@@ -147,7 +147,8 @@ class InheritedProvider<T> extends SingleChildStatelessComponent {
   }
 
   @override
-  Iterable<Component> buildWithChild(BuildContext context, Component? child) sync* {
+  Iterable<Component> buildWithChild(
+      BuildContext context, Component? child) sync* {
     final builder = this.builder;
     assert(
       builder != null || child != null,
@@ -254,7 +255,8 @@ extension SelectContext on BuildContext {
               throw ProviderNullException(T, component.runtimeType);
             }
 
-            return !const DeepCollectionEquality().equals(selector(newValue), selected);
+            return !const DeepCollectionEquality()
+                .equals(selector(newValue), selected);
           },
         );
       } else {
@@ -324,31 +326,37 @@ class _Dependency<T> {
   final selectors = <_SelectorAspect<T>>[];
 }
 
-class _InheritedProviderScopeElement<T> extends InheritedElement implements InheritedContext<T> {
-  _InheritedProviderScopeElement(_InheritedProviderScope<T> component) : super(component);
+class _InheritedProviderScopeElement<T> extends InheritedElement
+    implements InheritedContext<T> {
+  _InheritedProviderScopeElement(_InheritedProviderScope<T> component)
+      : super(component);
 
   bool _shouldNotifyDependents = false;
   bool _debugInheritLocked = false;
   bool _isNotifyDependentsEnabled = true;
   bool _updatedShouldNotify = false;
   bool _isBuildFromExternalSources = false;
-  late final _DelegateState<T, _Delegate<T>> _delegateState = component.owner._delegate.createState()..element = this;
+  late final _DelegateState<T, _Delegate<T>> _delegateState =
+      component.owner._delegate.createState()..element = this;
 
   @override
-  InheritedElement? getElementForInheritedComponentOfExactType<InheritedComponentType extends InheritedComponent>() {
+  InheritedElement? getElementForInheritedComponentOfExactType<
+      InheritedComponentType extends InheritedComponent>() {
     InheritedElement? inheritedElement;
 
     // An InheritedProvider<T>'s update tries to obtain a parent provider of
     // the same type.
     visitAncestorElements((parent) {
-      inheritedElement = parent.getElementForInheritedComponentOfExactType<InheritedComponentType>();
+      inheritedElement = parent
+          .getElementForInheritedComponentOfExactType<InheritedComponentType>();
       return false;
     });
     return inheritedElement;
   }
 
   @override
-  _InheritedProviderScope<T> get component => super.component as _InheritedProviderScope<T>;
+  _InheritedProviderScope<T> get component =>
+      super.component as _InheritedProviderScope<T>;
 
   @override
   void updateDependencies(Element dependent, Object? aspect) {
@@ -359,7 +367,8 @@ class _InheritedProviderScopeElement<T> extends InheritedElement implements Inhe
     }
 
     if (aspect is _SelectorAspect<T>) {
-      final selectorDependency = (dependencies ?? _Dependency<T>()) as _Dependency<T>;
+      final selectorDependency =
+          (dependencies ?? _Dependency<T>()) as _Dependency<T>;
 
       if (selectorDependency.shouldClearSelectors) {
         selectorDependency.shouldClearSelectors = false;
@@ -425,7 +434,8 @@ class _InheritedProviderScopeElement<T> extends InheritedElement implements Inhe
   @override
   void update(_InheritedProviderScope<T> newComponent) {
     assert(() {
-      if (component.owner._delegate.runtimeType != newComponent.owner._delegate.runtimeType) {
+      if (component.owner._delegate.runtimeType !=
+          newComponent.owner._delegate.runtimeType) {
         throw StateError('''
 Rebuilt $component using a different constructor.
       
@@ -437,7 +447,8 @@ If you're in this situation, consider passing a `key` unique to each individual 
     }());
 
     _isBuildFromExternalSources = true;
-    _updatedShouldNotify = _delegateState.willUpdateDelegate(newComponent.owner._delegate);
+    _updatedShouldNotify =
+        _delegateState.willUpdateDelegate(newComponent.owner._delegate);
     super.update(newComponent);
     _updatedShouldNotify = false;
   }
@@ -579,7 +590,8 @@ class _CreateInheritedProvider<T> extends _Delegate<T> {
   final Dispose<T>? dispose;
 
   @override
-  _CreateInheritedProviderState<T> createState() => _CreateInheritedProviderState();
+  _CreateInheritedProviderState<T> createState() =>
+      _CreateInheritedProviderState();
 }
 
 @visibleForTesting
@@ -590,7 +602,8 @@ bool debugIsInInheritedProviderUpdate = false;
 // ignore: public_member_api_docs
 bool debugIsInInheritedProviderCreate = false;
 
-class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInheritedProvider<T>> {
+class _CreateInheritedProviderState<T>
+    extends _DelegateState<T, _CreateInheritedProvider<T>> {
   VoidCallback? _removeListener;
   bool _didInitValue = false;
   T? _value;
@@ -610,8 +623,10 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
     bool? _debugPreviousIsInInheritedProviderUpdate;
 
     assert(() {
-      _debugPreviousIsInInheritedProviderCreate = debugIsInInheritedProviderCreate;
-      _debugPreviousIsInInheritedProviderUpdate = debugIsInInheritedProviderUpdate;
+      _debugPreviousIsInInheritedProviderCreate =
+          debugIsInInheritedProviderCreate;
+      _debugPreviousIsInInheritedProviderUpdate =
+          debugIsInInheritedProviderUpdate;
       return true;
     }());
 
@@ -631,8 +646,10 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
           rethrow;
         } finally {
           assert(() {
-            debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
-            debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
+            debugIsInInheritedProviderCreate =
+                _debugPreviousIsInInheritedProviderCreate!;
+            debugIsInInheritedProviderUpdate =
+                _debugPreviousIsInInheritedProviderUpdate!;
             return true;
           }());
         }
@@ -653,8 +670,10 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
           _value = delegate.update!(element!, _value);
         } finally {
           assert(() {
-            debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
-            debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
+            debugIsInInheritedProviderCreate =
+                _debugPreviousIsInInheritedProviderCreate!;
+            debugIsInInheritedProviderUpdate =
+                _debugPreviousIsInInheritedProviderUpdate!;
             return true;
           }());
         }
@@ -687,14 +706,18 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
     var shouldNotify = false;
     // Don't call `update` unless the build was triggered from `updated`/`didChangeDependencies`
     // otherwise `markNeedsNotifyDependents` will trigger unnecessary `update` calls
-    if (isBuildFromExternalSources && _didInitValue && delegate.update != null) {
+    if (isBuildFromExternalSources &&
+        _didInitValue &&
+        delegate.update != null) {
       final previousValue = _value;
 
       bool? _debugPreviousIsInInheritedProviderCreate;
       bool? _debugPreviousIsInInheritedProviderUpdate;
       assert(() {
-        _debugPreviousIsInInheritedProviderCreate = debugIsInInheritedProviderCreate;
-        _debugPreviousIsInInheritedProviderUpdate = debugIsInInheritedProviderUpdate;
+        _debugPreviousIsInInheritedProviderCreate =
+            debugIsInInheritedProviderCreate;
+        _debugPreviousIsInInheritedProviderUpdate =
+            debugIsInInheritedProviderUpdate;
         return true;
       }());
       try {
@@ -706,8 +729,10 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
         _value = delegate.update!(element!, _value as T);
       } finally {
         assert(() {
-          debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
-          debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
+          debugIsInInheritedProviderCreate =
+              _debugPreviousIsInInheritedProviderCreate!;
+          debugIsInInheritedProviderUpdate =
+              _debugPreviousIsInInheritedProviderUpdate!;
           return true;
         }());
       }
@@ -762,7 +787,8 @@ class _ValueInheritedProvider<T> extends _Delegate<T> {
   }
 }
 
-class _ValueInheritedProviderState<T> extends _DelegateState<T, _ValueInheritedProvider<T>> {
+class _ValueInheritedProviderState<T>
+    extends _DelegateState<T, _ValueInheritedProvider<T>> {
   VoidCallback? _removeListener;
 
   @override
@@ -811,4 +837,5 @@ class _ValueInheritedProviderState<T> extends _DelegateState<T, _ValueInheritedP
 /// See also:
 ///
 ///  * [ComponentBuilder], which is similar but only takes a [BuildContext].
-typedef TransitionBuilder = Iterable<Component> Function(BuildContext context, Component? child);
+typedef TransitionBuilder = Iterable<Component> Function(
+    BuildContext context, Component? child);
