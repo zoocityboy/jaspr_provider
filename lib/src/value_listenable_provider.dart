@@ -10,12 +10,12 @@ class ValueListenableProvider<T> extends StatelessComponent {
   /// This is useful for testing purposes, to easily simular a provider update:
   ///
   /// ```dart
-  /// testWidgets('example', (tester) async {
+  /// test('example', () async {
   ///   // Create a ValueNotifier that tests will use to drive the application
   ///   final counter = ValueNotifier(0);
   ///
   ///   // Mount the application using ValueListenableProvider
-  ///   await tester.pumpWidget(
+  ///   await tester.pumpComponent(
   ///     ValueListenableProvider<int>.value(
   ///       value: counter,
   ///       child: MyApp(),
@@ -48,8 +48,8 @@ class ValueListenableProvider<T> extends StatelessComponent {
   Iterable<Component> build(BuildContext context) sync* {
     yield ValueListenableBuilder<T>(
       valueListenable: _valueListenable,
-      builder: (context, value, _) {
-        return Provider<T>.value(
+      builder: (context, value, _) sync* {
+        yield Provider<T>.value(
           value: value,
           updateShouldNotify: _updateShouldNotify,
           child: child,
@@ -69,7 +69,7 @@ class ValueListenableProvider<T> extends StatelessComponent {
 ///
 ///  * [ValueListenableBuilder], a widget which invokes this builder each time
 ///    a [ValueListenable] changes value.
-typedef ValueComponentBuilder<T> = Component Function(BuildContext context, T value, Component? child);
+typedef ValueComponentBuilder<T> = Iterable<Component> Function(BuildContext context, T value, Component? child);
 
 /// A widget whose content stays synced with a [ValueListenable].
 ///
@@ -111,7 +111,7 @@ typedef ValueComponentBuilder<T> = Component Function(BuildContext context, T va
 ///   final ValueNotifier<int> _counter = ValueNotifier<int>(0);
 ///   final Widget goodJob = const Text('Good job!');
 ///   @override
-///   Widget build(BuildContext context) {
+///   Iterable<Component> build(BuildContext context) {
 ///     return Scaffold(
 ///       appBar: AppBar(
 ///         title: Text(widget.title)
@@ -122,7 +122,7 @@ typedef ValueComponentBuilder<T> = Component Function(BuildContext context, T va
 ///           children: <Widget>[
 ///             const Text('You have pushed the button this many times:'),
 ///             ValueListenableBuilder<int>(
-///               builder: (BuildContext context, int value, Widget? child) {
+///               builder: (BuildContext context, int value, Widget? child) sync* {
 ///                 // This builder will only get called when the _counter
 ///                 // is updated.
 ///                 return Row(
@@ -231,7 +231,7 @@ class _ValueListenableBuilderState<T> extends State<ValueListenableBuilder<T>> {
   }
 
   @override
-  Iterable<Component> build(BuildContext context) sync* {
-    yield component.builder(context, value, component.child);
+  Iterable<Component> build(BuildContext context) {
+    return component.builder(context, value, component.child);
   }
 }

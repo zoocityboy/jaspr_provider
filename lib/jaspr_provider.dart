@@ -59,4 +59,5 @@ export 'src/proxy_provider.dart'
         ProxyProviderBuilder6;
 export 'src/selector.dart'
     show Selector, Selector0, Selector2, Selector3, Selector4, Selector5, Selector6, ShouldRebuild;
+export 'src/single_child_stateless_component.dart' show SingleChildComponent, Nested;
 export 'src/value_listenable_provider.dart' show ValueListenableProvider;

@@ -1,8 +1,8 @@
 import 'package:collection/collection.dart';
 import 'package:jaspr/jaspr.dart';
 
-import 'consumer.dart';
-import 'provider.dart';
+import '../jaspr_provider.dart';
+import 'single_child_stateless_component.dart';
 import 'value_listenable_provider.dart';
 
 /// Used by providers to determine whether dependents needs to be updated
@@ -29,16 +29,16 @@ typedef ShouldRebuild<T> = bool Function(T previous, T next);
 /// ```
 ///
 /// will still call `builder` again, even if `value` didn't change.
-class Selector0<T> extends StatefulComponent {
+class Selector0<T> extends SingleChildStatefulComponent {
   /// Both `builder` and `selector` must not be `null`.
   Selector0({
     Key? key,
     required this.builder,
     required this.selector,
     ShouldRebuild<T>? shouldRebuild,
-    this.child,
+    Component? child,
   })  : _shouldRebuild = shouldRebuild,
-        super(key: key);
+        super(key: key, child: child);
 
   /// A function that builds a widget tree from `child` and the last result of
   /// [selector].
@@ -49,9 +49,6 @@ class Selector0<T> extends StatefulComponent {
   ///
   /// Must not be `null`.
   final ValueComponentBuilder<T> builder;
-  
-  /// Component which will be passed to the [builder].
-  final Component? child;
 
   /// A function that obtains some [InheritedComponent] and map their content into
   /// a new object with only a limited number of properties.
@@ -67,30 +64,28 @@ class Selector0<T> extends StatefulComponent {
   _Selector0State<T> createState() => _Selector0State<T>();
 }
 
-class _Selector0State<T> extends State<Selector0<T>> {
+class _Selector0State<T> extends SingleChildState<Selector0<T>> {
   T? value;
-  Component? cache;
+  Iterable<Component>? cache;
   Component? oldWidget;
 
   @override
-  Iterable<Component> build(BuildContext context) sync* {
+  Iterable<Component> buildWithChild(BuildContext context, Component? child) {
     final selected = component.selector(context);
 
     final shouldInvalidateCache = oldWidget != component ||
-        (component._shouldRebuild != null &&
-            component._shouldRebuild!(value as T, selected)) ||
-        (component._shouldRebuild == null &&
-            !const DeepCollectionEquality().equals(value, selected));
+        (component._shouldRebuild != null && component._shouldRebuild!(value as T, selected)) ||
+        (component._shouldRebuild == null && !const DeepCollectionEquality().equals(value, selected));
     if (shouldInvalidateCache) {
       value = selected;
       oldWidget = component;
       cache = component.builder(
         context,
         selected,
-        component.child,
+        child,
       );
     }
-    yield cache!;
+    return cache!;
   }
 }
 
@@ -122,7 +117,7 @@ class _Selector0State<T> extends State<Selector0<T>> {
 /// Selector<Foo, Tuple2<Bar, Baz>>(
 ///   selector: (_, foo) => Tuple2(foo.bar, foo.baz),
 ///   builder: (_, data, __) {
-///     return Text('${data.item1}  ${data.item2}');
+///     yield Text('${data.item1}  ${data.item2}');
 ///   }
 /// )
 /// ```

@@ -4,6 +4,7 @@ import 'package:jaspr/jaspr.dart';
 ///
 /// See also:
 /// - [SingleChildStatelessComponent]
+/// - [SingleChildStatefulComponent]
 abstract class SingleChildComponent implements Component {
   @override
   _SingleChildComponentElementMixin createElement();
@@ -71,7 +72,7 @@ class _NestedHook extends StatelessComponent {
 ///   final Widget child;
 ///
 ///   @override
-///   Widget build(BuildContext context) {
+///   Iterable<Component> build(BuildContext context) {
 ///     return SomethingWidget(child: child);
 ///   }
 /// }
@@ -84,7 +85,7 @@ class _NestedHook extends StatelessComponent {
 ///   MyWidget({Key key, Widget child}): super(key: key, child: child);
 ///
 ///   @override
-///   Widget buildWithChild(BuildContext context, Widget child) {
+///   Iterable<Component> buildWithChild(BuildContext context, Widget child) sync* {
 ///     return SomethingWidget(child: child);
 ///   }
 /// }
@@ -224,6 +225,58 @@ class _NestedHookElement extends StatelessElement {
   @override
   Iterable<Component> build() sync* {
     yield wrappedChild!;
+  }
+}
+
+/// A [StatefulComponent] that is compatible with [Nested].
+abstract class SingleChildStatefulComponent extends StatefulComponent implements SingleChildComponent {
+  /// Creates a widget that has exactly one child widget.
+  const SingleChildStatefulComponent({Key? key, Component? child})
+      : _child = child,
+        super(key: key);
+
+  final Component? _child;
+
+  @override
+  SingleChildStatefulElement createElement() {
+    return SingleChildStatefulElement(this);
+  }
+}
+
+/// A [State] for [SingleChildStatefulComponent].
+///
+/// Do not override [build] and instead override [buildWithChild].
+abstract class SingleChildState<T extends SingleChildStatefulComponent> extends State<T> {
+  /// A [build] method that receives an extra `child` parameter.
+  ///
+  /// This method may be called with a `child` different from the parameter
+  /// passed to the constructor of [SingleChildStatelessComponent].
+  /// It may also be called again with a different `child`, without this widget
+  /// being recreated.
+  Iterable<Component> buildWithChild(BuildContext context, Component? child);
+
+  @override
+  Iterable<Component> build(BuildContext context) => buildWithChild(context, component._child);
+}
+
+/// An [Element] that uses a [SingleChildStatefulComponent] as its configuration.
+class SingleChildStatefulElement extends StatefulElement with _SingleChildComponentElementMixin {
+  /// Creates an element that uses the given widget as its configuration.
+  SingleChildStatefulElement(SingleChildStatefulComponent widget) : super(widget);
+
+  @override
+  SingleChildStatefulComponent get component => super.component as SingleChildStatefulComponent;
+
+  @override
+  SingleChildState<SingleChildStatefulComponent> get state =>
+      super.state as SingleChildState<SingleChildStatefulComponent>;
+
+  @override
+  Iterable<Component> build() {
+    if (_parent != null) {
+      return state.buildWithChild(this, _parent!.injectedChild);
+    }
+    return super.build();
   }
 }
 
