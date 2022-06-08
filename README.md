@@ -1,4 +1,6 @@
 <!-- Add codecov tag later -->
+A port of Flutter's [Provider](https://pub.dev/packages/provider) package to [jaspr](https://pub.dev/packages/jaspr).
+
 A wrapper around [InheritedComponent]
 to make them easier to use and more reusable.
 
