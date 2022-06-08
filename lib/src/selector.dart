@@ -1,10 +1,9 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:nested/nested.dart';
+import 'package:jaspr/jaspr.dart';
 
-import 'consumer.dart';
-import 'provider.dart';
+import '../jaspr_provider.dart';
+import 'single_child_stateless_component.dart';
+import 'value_listenable_provider.dart';
 
 /// Used by providers to determine whether dependents needs to be updated
 /// when the value exposed changes
@@ -12,11 +11,11 @@ typedef ShouldRebuild<T> = bool Function(T previous, T next);
 
 /// A base class for custom [Selector].
 ///
-/// It works with any [InheritedWidget]. Variants like [Selector] and
+/// It works with any [InheritedComponent]. Variants like [Selector] and
 /// [Selector6] are just syntax sugar to use [Selector0] with [Provider.of].
 ///
 /// But it will **not** work with values
-/// coming from anything but [InheritedWidget].
+/// coming from anything but [InheritedComponent].
 ///
 /// As such, the following:
 ///
@@ -30,28 +29,28 @@ typedef ShouldRebuild<T> = bool Function(T previous, T next);
 /// ```
 ///
 /// will still call `builder` again, even if `value` didn't change.
-class Selector0<T> extends SingleChildStatefulWidget {
+class Selector0<T> extends SingleChildStatefulComponent {
   /// Both `builder` and `selector` must not be `null`.
   Selector0({
     Key? key,
     required this.builder,
     required this.selector,
     ShouldRebuild<T>? shouldRebuild,
-    Widget? child,
+    Component? child,
   })  : _shouldRebuild = shouldRebuild,
         super(key: key, child: child);
 
-  /// A function that builds a widget tree from `child` and the last result of
+  /// A function that builds a component tree from `child` and the last result of
   /// [selector].
   ///
-  /// [builder] will be called again whenever the its parent widget asks for an
+  /// [builder] will be called again whenever the its parent component asks for an
   /// update, or if [selector] return a value that is different from the
   /// previous one using [operator==].
   ///
   /// Must not be `null`.
-  final ValueWidgetBuilder<T> builder;
+  final ValueComponentBuilder<T> builder;
 
-  /// A function that obtains some [InheritedWidget] and map their content into
+  /// A function that obtains some [InheritedComponent] and map their content into
   /// a new object with only a limited number of properties.
   ///
   /// The returned object must implement [operator==].
@@ -67,34 +66,26 @@ class Selector0<T> extends SingleChildStatefulWidget {
 
 class _Selector0State<T> extends SingleChildState<Selector0<T>> {
   T? value;
-  Widget? cache;
-  Widget? oldWidget;
+  Iterable<Component>? cache;
+  Component? oldComponent;
 
   @override
-  Widget buildWithChild(BuildContext context, Widget? child) {
-    final selected = widget.selector(context);
+  Iterable<Component> buildWithChild(BuildContext context, Component? child) {
+    final selected = component.selector(context);
 
-    final shouldInvalidateCache = oldWidget != widget ||
-        (widget._shouldRebuild != null &&
-            widget._shouldRebuild!(value as T, selected)) ||
-        (widget._shouldRebuild == null &&
-            !const DeepCollectionEquality().equals(value, selected));
+    final shouldInvalidateCache = oldComponent != component ||
+        (component._shouldRebuild != null && component._shouldRebuild!(value as T, selected)) ||
+        (component._shouldRebuild == null && !const DeepCollectionEquality().equals(value, selected));
     if (shouldInvalidateCache) {
       value = selected;
-      oldWidget = widget;
-      cache = widget.builder(
+      oldComponent = component;
+      cache = component.builder(
         context,
         selected,
         child,
       );
     }
     return cache!;
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty<T>('value', value));
   }
 }
 
@@ -125,8 +116,8 @@ class _Selector0State<T> extends SingleChildState<Selector0<T>> {
 /// ```dart
 /// Selector<Foo, Tuple2<Bar, Baz>>(
 ///   selector: (_, foo) => Tuple2(foo.bar, foo.baz),
-///   builder: (_, data, __) {
-///     return Text('${data.item1}  ${data.item2}');
+///   builder: (_, data, __) sync* {
+///     yield Text('${data.item1}  ${data.item2}');
 ///   }
 /// )
 /// ```
@@ -140,10 +131,10 @@ class Selector<A, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,
@@ -158,10 +149,10 @@ class Selector2<A, B, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector2({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A, B) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,
@@ -180,10 +171,10 @@ class Selector3<A, B, C, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector3({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A, B, C) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,
@@ -203,10 +194,10 @@ class Selector4<A, B, C, D, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector4({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A, B, C, D) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,
@@ -227,10 +218,10 @@ class Selector5<A, B, C, D, E, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector5({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A, B, C, D, E) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,
@@ -252,10 +243,10 @@ class Selector6<A, B, C, D, E, F, S> extends Selector0<S> {
   /// {@macro provider.selector}
   Selector6({
     Key? key,
-    required ValueWidgetBuilder<S> builder,
+    required ValueComponentBuilder<S> builder,
     required S Function(BuildContext, A, B, C, D, E, F) selector,
     ShouldRebuild<S>? shouldRebuild,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           shouldRebuild: shouldRebuild,

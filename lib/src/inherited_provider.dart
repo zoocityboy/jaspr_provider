@@ -5,7 +5,7 @@ part of 'provider.dart';
 ///
 /// See also:
 ///
-///   * [InheritedWidget.updateShouldNotify]
+///   * [InheritedComponent.updateShouldNotify]
 typedef UpdateShouldNotify<T> = bool Function(T previous, T current);
 
 /// A function that creates an object of type [T].
@@ -40,9 +40,9 @@ typedef StartListening<T> = VoidCallback Function(
   T value,
 );
 
-/// A generic implementation of an [InheritedWidget].
+/// A generic implementation of an [InheritedComponent].
 ///
-/// Any descendant of this widget can obtain `value` using [Provider.of].
+/// Any descendant of this component can obtain `value` using [Provider.of].
 ///
 /// Do not use this class directly unless you are creating a custom "Provider".
 /// Instead use [Provider] class, which wraps [InheritedProvider].
@@ -51,11 +51,11 @@ typedef StartListening<T> = VoidCallback Function(
 ///
 ///  - [DeferredInheritedProvider], a variant of this object where the provided
 ///    object and the created object are two different entity.
-class InheritedProvider<T> extends SingleChildStatelessWidget {
+class InheritedProvider<T> extends SingleChildStatelessComponent {
   /// Creates a value, then expose it to its descendants.
   ///
   /// The value will be disposed of when [InheritedProvider] is removed from
-  /// the widget tree.
+  /// the component tree.
   InheritedProvider({
     Key? key,
     Create<T>? create,
@@ -66,7 +66,7 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
     Dispose<T>? dispose,
     this.builder,
     bool? lazy,
-    Widget? child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = _CreateInheritedProvider(
           create: create,
@@ -86,7 +86,7 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
     StartListening<T>? startListening,
     bool? lazy,
     this.builder,
-    Widget? child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = _ValueInheritedProvider(
           value: value,
@@ -100,7 +100,7 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
     required _Delegate<T> delegate,
     bool? lazy,
     this.builder,
-    Widget? child,
+    Component? child,
   })  : _lazy = lazy,
         _delegate = delegate,
         super(key: key, child: child);
@@ -116,9 +116,9 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
   /// ```dart
   /// Provider<int>(
   ///   create: (context) => 42,
-  ///   builder: (context, child) {
+  ///   builder: (context, child) sync* {
   ///     final value = context.watch<int>();
-  ///     return Text('$value');
+  ///     yield Text('$value');
   ///   }
   /// )
   /// ```
@@ -129,23 +129,17 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
   /// Provider<int>(
   ///   create: (context) => 42,
   ///   child: Builder(
-  ///     builder: (context) {
+  ///     builder: (context) sync* {
   ///       final value = context.watch<int>();
-  ///       return Text('$value');
+  ///       yield Text('$value');
   ///     },
   ///   ),
   /// )
   /// ```
   ///
   /// For an explanation on the `child` parameter that `builder` receives,
-  /// see the "Performance optimizations" section of [AnimatedBuilder].
+  /// see the "Performance optimizations" section of fluter's `AnimatedBuilder`.
   final TransitionBuilder? builder;
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    _delegate.debugFillProperties(properties);
-  }
 
   @override
   _InheritedProviderElement<T> createElement() {
@@ -153,18 +147,19 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
   }
 
   @override
-  Widget buildWithChild(BuildContext context, Widget? child) {
+  Iterable<Component> buildWithChild(BuildContext context, Component? child) sync* {
+    final builder = this.builder;
     assert(
       builder != null || child != null,
       '$runtimeType used outside of MultiProvider must specify a child',
     );
-    return _InheritedProviderScope<T?>(
+    yield _InheritedProviderScope<T?>(
       owner: this,
       // ignore: no_runtimetype_tostring
       debugType: kDebugMode ? '$runtimeType' : '',
       child: builder != null
           ? Builder(
-              builder: (context) => builder!(context, child),
+              builder: (context) => builder(context, child),
             )
           : child!,
     );
@@ -172,20 +167,14 @@ class InheritedProvider<T> extends SingleChildStatelessWidget {
 }
 
 class _InheritedProviderElement<T> extends SingleChildStatelessElement {
-  _InheritedProviderElement(InheritedProvider<T> widget) : super(widget);
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    visitChildren((e) => e.debugFillProperties(properties));
-  }
+  _InheritedProviderElement(InheritedProvider<T> component) : super(component);
 }
 
 bool _debugIsSelecting = false;
 
 /// Adds a `select` method on [BuildContext].
 extension SelectContext on BuildContext {
-  /// Watch a value of type [T] exposed from a provider, and mark this widget for rebuild
+  /// Watch a value of type [T] exposed from a provider, and mark this component for rebuild
   /// on changes of that value.
   ///
   /// If [T] is nullable and no matching providers are found, [watch] will
@@ -193,20 +182,20 @@ extension SelectContext on BuildContext {
   /// If [T] is non-nullable and the provider obtained returned `null`, will
   /// throw [ProviderNullException].
   ///
-  /// This allows widgets to optionally depend on a provider:
+  /// This allows components to optionally depend on a provider:
   ///
   /// ```dart
   /// runApp(
-  ///   Builder(builder: (context) {
+  ///   Builder(builder: (context) sync* {
   ///     final title = context.select<Movie?, String>((movie) => movie?.title);
   ///
   ///     if (title == null) Text('no Movie found');
-  ///     return Text(title);
+  ///     yield Text(title);
   ///   }),
   /// );
   /// ```
   ///
-  /// [select] must be used only inside the `build` method of a widget.
+  /// [select] must be used only inside the `build` method of a component.
   /// It will not work inside other life-cycles, including [State.didChangeDependencies].
   ///
   /// By using [select], instead of watching the entire object, the listener will
@@ -228,52 +217,27 @@ extension SelectContext on BuildContext {
   /// }
   /// ```
   ///
-  /// Then a widget may want to listen to a person's `name` without listening
+  /// Then a component may want to listen to a person's `name` without listening
   /// to its `age`.
   ///
   /// This cannot be done using `context.watch`/[Provider.of]. Instead, we
   /// can use [select], by writing the following:
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
+  /// Iterable<Component> build(BuildContext context) sync* {
   ///   final name = context.select((Person p) => p.name);
   ///
-  ///   return Text(name);
+  ///   yield Text(name);
   /// }
   /// ```
   ///
   /// It is fine to call `select` multiple times.
   R select<T, R>(R Function(T value) selector) {
-    assert(widget is! SliverWithKeepAliveWidget, '''
-    Tried to use context.select inside a SliverList/SliderGridView.
-
-    This is likely a mistake, as instead of rebuilding only the item that cares
-    about the selected value, this would rebuild the entire list/grid.
-
-    To fix, add a `Builder` or extract the content of `itemBuilder` in a separate widget:
-
-    ```dart
-    ListView.builder(
-      itemBuilder: (context, index) {
-        return Builder(builder: (context) {
-          final todo = context.select((TodoList list) => list[index]);
-          return Text(todo.name);
-        });
-      },
-    );
-    ```
-    ''');
-    assert(widget is LayoutBuilder || debugDoingBuild, '''
-Tried to use `context.select` outside of the `build` method of a widget.
-
-Any usage other than inside the `build` method of a widget are not supported.
-''');
-
     final inheritedElement = Provider._inheritedElementOf<T>(this);
     try {
       final value = inheritedElement?.value;
       if (value is! T) {
-        throw ProviderNullException(T, widget.runtimeType);
+        throw ProviderNullException(T, component.runtimeType);
       }
 
       assert(() {
@@ -287,17 +251,16 @@ Any usage other than inside the `build` method of a widget are not supported.
           inheritedElement,
           aspect: (T? newValue) {
             if (newValue is! T) {
-              throw ProviderNullException(T, widget.runtimeType);
+              throw ProviderNullException(T, component.runtimeType);
             }
 
-            return !const DeepCollectionEquality()
-                .equals(selector(newValue), selected);
+            return !const DeepCollectionEquality().equals(selector(newValue), selected);
           },
         );
       } else {
-        // tell Flutter to rebuild the widget when relocated using GlobalKey
+        // tell Flutter to rebuild the component when relocated using GlobalKey
         // if no provider were found before.
-        dependOnInheritedWidgetOfExactType<_InheritedProviderScope<T?>>();
+        dependOnInheritedComponentOfExactType<_InheritedProviderScope<T?>>();
       }
       return selected;
     } finally {
@@ -322,7 +285,7 @@ abstract class InheritedContext<T> extends BuildContext {
 
   /// Marks the [InheritedProvider] as needing to update dependents.
   ///
-  /// This bypass [InheritedWidget.updateShouldNotify] and will force widgets
+  /// This bypass [InheritedComponent.updateShouldNotify] and will force components
   /// that depends on [T] to rebuild.
   void markNeedsNotifyDependents();
 
@@ -333,11 +296,11 @@ abstract class InheritedContext<T> extends BuildContext {
   bool get hasValue;
 }
 
-class _InheritedProviderScope<T> extends InheritedWidget {
+class _InheritedProviderScope<T> extends InheritedComponent {
   const _InheritedProviderScope({
     required this.owner,
     required this.debugType,
-    required Widget child,
+    required Component child,
   })  : assert(null is T),
         super(child: child);
 
@@ -345,7 +308,7 @@ class _InheritedProviderScope<T> extends InheritedWidget {
   final String debugType;
 
   @override
-  bool updateShouldNotify(InheritedWidget oldWidget) {
+  bool updateShouldNotify(InheritedComponent oldComponent) {
     return false;
   }
 
@@ -361,69 +324,31 @@ class _Dependency<T> {
   final selectors = <_SelectorAspect<T>>[];
 }
 
-class _InheritedProviderScopeElement<T> extends InheritedElement
-    implements InheritedContext<T> {
-  _InheritedProviderScopeElement(_InheritedProviderScope<T> widget)
-      : super(widget);
-
-  static int _nextProviderId = 0;
+class _InheritedProviderScopeElement<T> extends InheritedElement implements InheritedContext<T> {
+  _InheritedProviderScopeElement(_InheritedProviderScope<T> component) : super(component);
 
   bool _shouldNotifyDependents = false;
   bool _debugInheritLocked = false;
   bool _isNotifyDependentsEnabled = true;
   bool _updatedShouldNotify = false;
   bool _isBuildFromExternalSources = false;
-  late final _DelegateState<T, _Delegate<T>> _delegateState =
-      widget.owner._delegate.createState()..element = this;
-  late String _debugId;
+  late final _DelegateState<T, _Delegate<T>> _delegateState = component.owner._delegate.createState()..element = this;
 
   @override
-  InheritedElement? getElementForInheritedWidgetOfExactType<
-      InheritedWidgetType extends InheritedWidget>() {
+  InheritedElement? getElementForInheritedComponentOfExactType<InheritedComponentType extends InheritedComponent>() {
     InheritedElement? inheritedElement;
 
     // An InheritedProvider<T>'s update tries to obtain a parent provider of
     // the same type.
     visitAncestorElements((parent) {
-      inheritedElement =
-          parent.getElementForInheritedWidgetOfExactType<InheritedWidgetType>();
+      inheritedElement = parent.getElementForInheritedComponentOfExactType<InheritedComponentType>();
       return false;
     });
     return inheritedElement;
   }
 
   @override
-  void mount(Element? parent, dynamic newSlot) {
-    if (kDebugMode) {
-      _debugId = '${_nextProviderId++}';
-      ProviderBinding.debugInstance.providerDetails = {
-        ...ProviderBinding.debugInstance.providerDetails,
-        _debugId: ProviderNode(
-          id: _debugId,
-          childrenNodeIds: const [],
-          // ignore: no_runtimetype_tostring
-          type: widget.debugType,
-          element: this,
-        )
-      };
-    }
-
-    super.mount(parent, newSlot);
-  }
-
-  @override
-  _InheritedProviderScope<T> get widget =>
-      super.widget as _InheritedProviderScope<T>;
-
-  @override
-  void reassemble() {
-    super.reassemble();
-
-    final value = _delegateState.hasValue ? _delegateState.value : null;
-    if (value is ReassembleHandler) {
-      value.reassemble();
-    }
-  }
+  _InheritedProviderScope<T> get component => super.component as _InheritedProviderScope<T>;
 
   @override
   void updateDependencies(Element dependent, Object? aspect) {
@@ -434,8 +359,7 @@ class _InheritedProviderScopeElement<T> extends InheritedElement
     }
 
     if (aspect is _SelectorAspect<T>) {
-      final selectorDependency =
-          (dependencies ?? _Dependency<T>()) as _Dependency<T>;
+      final selectorDependency = (dependencies ?? _Dependency<T>()) as _Dependency<T>;
 
       if (selectorDependency.shouldClearSelectors) {
         selectorDependency.shouldClearSelectors = false;
@@ -458,12 +382,8 @@ class _InheritedProviderScopeElement<T> extends InheritedElement
   }
 
   @override
-  void notifyDependent(InheritedWidget oldWidget, Element dependent) {
+  void notifyDependent(InheritedComponent oldComponent, Element dependent) {
     final dependencies = getDependencies(dependent);
-
-    if (kDebugMode) {
-      ProviderBinding.debugInstance.providerDidChange(_debugId);
-    }
 
     var shouldNotify = false;
     if (dependencies != null) {
@@ -503,12 +423,11 @@ class _InheritedProviderScopeElement<T> extends InheritedElement
   }
 
   @override
-  void update(_InheritedProviderScope<T> newWidget) {
+  void update(_InheritedProviderScope<T> newComponent) {
     assert(() {
-      if (widget.owner._delegate.runtimeType !=
-          newWidget.owner._delegate.runtimeType) {
+      if (component.owner._delegate.runtimeType != newComponent.owner._delegate.runtimeType) {
         throw StateError('''
-Rebuilt $widget using a different constructor.
+Rebuilt $component using a different constructor.
       
 This is likely a mistake and is unsupported.
 If you're in this situation, consider passing a `key` unique to each individual constructor.
@@ -518,17 +437,16 @@ If you're in this situation, consider passing a `key` unique to each individual 
     }());
 
     _isBuildFromExternalSources = true;
-    _updatedShouldNotify =
-        _delegateState.willUpdateDelegate(newWidget.owner._delegate);
-    super.update(newWidget);
+    _updatedShouldNotify = _delegateState.willUpdateDelegate(newComponent.owner._delegate);
+    super.update(newComponent);
     _updatedShouldNotify = false;
   }
 
   @override
-  void updated(InheritedWidget oldWidget) {
-    super.updated(oldWidget);
+  void updated(InheritedComponent oldComponent) {
+    super.updated(oldComponent);
     if (_updatedShouldNotify) {
-      notifyClients(oldWidget);
+      notifyClients(oldComponent);
     }
   }
 
@@ -539,8 +457,8 @@ If you're in this situation, consider passing a `key` unique to each individual 
   }
 
   @override
-  Widget build() {
-    if (widget.owner._lazy == false) {
+  Component? build() {
+    if (component.owner._lazy == false) {
       value; // this will force the value to be computed.
     }
     _delegateState.build(
@@ -549,7 +467,7 @@ If you're in this situation, consider passing a `key` unique to each individual 
     _isBuildFromExternalSources = false;
     if (_shouldNotifyDependents) {
       _shouldNotifyDependents = false;
-      notifyClients(widget);
+      notifyClients(component);
     }
     return super.build();
   }
@@ -557,11 +475,6 @@ If you're in this situation, consider passing a `key` unique to each individual 
   @override
   void unmount() {
     _delegateState.dispose();
-    if (kDebugMode) {
-      ProviderBinding.debugInstance.providerDetails = {
-        ...ProviderBinding.debugInstance.providerDetails,
-      }..remove(_debugId);
-    }
     super.unmount();
   }
 
@@ -590,45 +503,33 @@ If you're in this situation, consider passing a `key` unique to each individual 
   T get value => _delegateState.value;
 
   @override
-  InheritedWidget dependOnInheritedElement(
+  InheritedComponent dependOnInheritedElement(
     InheritedElement ancestor, {
     Object? aspect,
   }) {
     assert(() {
       if (_debugInheritLocked) {
-        throw FlutterError.fromParts(
-          <DiagnosticsNode>[
-            ErrorSummary(
-              'Tried to listen to an InheritedWidget '
-              'in a life-cycle that will never be called again.',
-            ),
-            ErrorDescription('''
+        throw Exception('''
+Tried to listen to an InheritedComponent
+in a life-cycle that will never be called again.
 This error typically happens when calling Provider.of with `listen` to `true`,
 in a situation where listening to the provider doesn't make sense, such as:
-- initState of a StatefulWidget
+- initState of a StatefulComponent
 - the "create" callback of a provider
 
 This is undesired because these life-cycles are called only once in the
-lifetime of a widget. As such, while `listen` is `true`, the widget has
+lifetime of a component. As such, while `listen` is `true`, the component has
 no mean to handle the update scenario.
 
 To fix, consider:
 - passing `listen: false` to `Provider.of`
 - use a life-cycle that handles updates (like didChangeDependencies)
 - use a provider that handles updates (like ProxyProvider).
-'''),
-          ],
-        );
+''');
       }
       return true;
     }());
     return super.dependOnInheritedElement(ancestor, aspect: aspect);
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    _delegateState.debugFillProperties(properties);
   }
 }
 
@@ -637,8 +538,6 @@ typedef _SelectorAspect<T> = bool Function(T value);
 @immutable
 abstract class _Delegate<T> {
   _DelegateState<T, _Delegate<T>> createState();
-
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {}
 }
 
 abstract class _DelegateState<T, D extends _Delegate<T>> {
@@ -646,7 +545,7 @@ abstract class _DelegateState<T, D extends _Delegate<T>> {
 
   T get value;
 
-  D get delegate => element!.widget.owner._delegate as D;
+  D get delegate => element!.component.owner._delegate as D;
 
   bool get hasValue;
 
@@ -657,8 +556,6 @@ abstract class _DelegateState<T, D extends _Delegate<T>> {
   bool willUpdateDelegate(D newDelegate) => false;
 
   void dispose() {}
-
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {}
 
   void build({required bool isBuildFromExternalSources}) {}
 }
@@ -682,8 +579,7 @@ class _CreateInheritedProvider<T> extends _Delegate<T> {
   final Dispose<T>? dispose;
 
   @override
-  _CreateInheritedProviderState<T> createState() =>
-      _CreateInheritedProviderState();
+  _CreateInheritedProviderState<T> createState() => _CreateInheritedProviderState();
 }
 
 @visibleForTesting
@@ -694,18 +590,16 @@ bool debugIsInInheritedProviderUpdate = false;
 // ignore: public_member_api_docs
 bool debugIsInInheritedProviderCreate = false;
 
-class _CreateInheritedProviderState<T>
-    extends _DelegateState<T, _CreateInheritedProvider<T>> {
+class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInheritedProvider<T>> {
   VoidCallback? _removeListener;
   bool _didInitValue = false;
   T? _value;
-  _CreateInheritedProvider<T>? _previousWidget;
-  FlutterErrorDetails? _initError;
+  _CreateInheritedProvider<T>? _previousComponent;
+  Object? _initError;
 
   @override
   T get value {
     if (_didInitValue && _initError != null) {
-      // TODO(rrousselGit) update to use Error.throwWithStacktTrace when it reaches stable
       throw StateError(
         'Tried to read a provider that threw during the creation of its value.\n'
         'The exception occurred during the creation of type $T.\n\n'
@@ -716,10 +610,8 @@ class _CreateInheritedProviderState<T>
     bool? _debugPreviousIsInInheritedProviderUpdate;
 
     assert(() {
-      _debugPreviousIsInInheritedProviderCreate =
-          debugIsInInheritedProviderCreate;
-      _debugPreviousIsInInheritedProviderUpdate =
-          debugIsInInheritedProviderUpdate;
+      _debugPreviousIsInInheritedProviderCreate = debugIsInInheritedProviderCreate;
+      _debugPreviousIsInInheritedProviderUpdate = debugIsInInheritedProviderUpdate;
       return true;
     }());
 
@@ -735,18 +627,12 @@ class _CreateInheritedProviderState<T>
           }());
           _value = delegate.create!(element!);
         } catch (e, stackTrace) {
-          _initError = FlutterErrorDetails(
-            library: 'provider',
-            exception: e,
-            stack: stackTrace,
-          );
+          _initError = Exception('provider $e, $stackTrace');
           rethrow;
         } finally {
           assert(() {
-            debugIsInInheritedProviderCreate =
-                _debugPreviousIsInInheritedProviderCreate!;
-            debugIsInInheritedProviderUpdate =
-                _debugPreviousIsInInheritedProviderUpdate!;
+            debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
+            debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
             return true;
           }());
         }
@@ -767,10 +653,8 @@ class _CreateInheritedProviderState<T>
           _value = delegate.update!(element!, _value);
         } finally {
           assert(() {
-            debugIsInInheritedProviderCreate =
-                _debugPreviousIsInInheritedProviderCreate!;
-            debugIsInInheritedProviderUpdate =
-                _debugPreviousIsInInheritedProviderUpdate!;
+            debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
+            debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
             return true;
           }());
         }
@@ -799,48 +683,18 @@ class _CreateInheritedProviderState<T>
   }
 
   @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    if (_didInitValue) {
-      properties
-        ..add(DiagnosticsProperty('value', value))
-        ..add(
-          FlagProperty(
-            '',
-            value: _removeListener != null,
-            defaultValue: false,
-            ifTrue: 'listening to value',
-          ),
-        );
-    } else {
-      properties.add(
-        FlagProperty(
-          'value',
-          value: true,
-          showName: true,
-          ifTrue: '<not yet loaded>',
-        ),
-      );
-    }
-  }
-
-  @override
   void build({required bool isBuildFromExternalSources}) {
     var shouldNotify = false;
     // Don't call `update` unless the build was triggered from `updated`/`didChangeDependencies`
     // otherwise `markNeedsNotifyDependents` will trigger unnecessary `update` calls
-    if (isBuildFromExternalSources &&
-        _didInitValue &&
-        delegate.update != null) {
+    if (isBuildFromExternalSources && _didInitValue && delegate.update != null) {
       final previousValue = _value;
 
       bool? _debugPreviousIsInInheritedProviderCreate;
       bool? _debugPreviousIsInInheritedProviderUpdate;
       assert(() {
-        _debugPreviousIsInInheritedProviderCreate =
-            debugIsInInheritedProviderCreate;
-        _debugPreviousIsInInheritedProviderUpdate =
-            debugIsInInheritedProviderUpdate;
+        _debugPreviousIsInInheritedProviderCreate = debugIsInInheritedProviderCreate;
+        _debugPreviousIsInInheritedProviderUpdate = debugIsInInheritedProviderUpdate;
         return true;
       }());
       try {
@@ -852,10 +706,8 @@ class _CreateInheritedProviderState<T>
         _value = delegate.update!(element!, _value as T);
       } finally {
         assert(() {
-          debugIsInInheritedProviderCreate =
-              _debugPreviousIsInInheritedProviderCreate!;
-          debugIsInInheritedProviderUpdate =
-              _debugPreviousIsInInheritedProviderUpdate!;
+          debugIsInInheritedProviderCreate = _debugPreviousIsInInheritedProviderCreate!;
+          debugIsInInheritedProviderUpdate = _debugPreviousIsInInheritedProviderUpdate!;
           return true;
         }());
       }
@@ -878,14 +730,14 @@ class _CreateInheritedProviderState<T>
           _removeListener!();
           _removeListener = null;
         }
-        _previousWidget?.dispose?.call(element!, previousValue as T);
+        _previousComponent?.dispose?.call(element!, previousValue as T);
       }
     }
 
     if (shouldNotify) {
       element!._shouldNotifyDependents = true;
     }
-    _previousWidget = delegate;
+    _previousComponent = delegate;
     return super.build(isBuildFromExternalSources: isBuildFromExternalSources);
   }
 
@@ -905,19 +757,12 @@ class _ValueInheritedProvider<T> extends _Delegate<T> {
   final StartListening<T>? startListening;
 
   @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(DiagnosticsProperty('value', value));
-  }
-
-  @override
   _ValueInheritedProviderState<T> createState() {
     return _ValueInheritedProviderState<T>();
   }
 }
 
-class _ValueInheritedProviderState<T>
-    extends _DelegateState<T, _ValueInheritedProvider<T>> {
+class _ValueInheritedProviderState<T> extends _DelegateState<T, _ValueInheritedProvider<T>> {
   VoidCallback? _removeListener;
 
   @override
@@ -955,18 +800,15 @@ class _ValueInheritedProviderState<T>
   }
 
   @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(
-      FlagProperty(
-        '',
-        value: _removeListener != null,
-        defaultValue: false,
-        ifTrue: 'listening to value',
-      ),
-    );
-  }
-
-  @override
   bool get hasValue => true;
 }
+
+/// A builder that builds a component given a child.
+///
+/// The child should typically be part of the returned component tree.
+///
+///
+/// See also:
+///
+///  * [ComponentBuilder], which is similar but only takes a [BuildContext].
+typedef TransitionBuilder = Iterable<Component> Function(BuildContext context, Component? child);

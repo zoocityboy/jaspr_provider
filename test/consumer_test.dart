@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'common.dart';
 
@@ -29,7 +28,7 @@ class Combined {
   final D? d;
   final E? e;
   final F? f;
-  final Widget? child;
+  final Component? child;
   final BuildContext? context;
 
   @override
@@ -63,23 +62,32 @@ void main() {
   ];
 
   final mock = ConsumerBuilderMock();
-  tearDown(() {
+
+  late ComponentTester tester;
+
+  setUp(() {
+    tester = ComponentTester.setUp();
+  });
+
+  tearDown(() async {
     clearInteractions(mock);
+    await tester.pumpComponent(Container());
+    await tester.pump();
   });
 
   group('consumer', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer<A>(
             key: key,
-            builder: (context, value, child) {
+            builder: (context, value, child) sync* {
               mock(Combined(context, child, value));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -89,41 +97,43 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
-
-      await tester.pumpWidget(
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
+      await tester.pump();
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer<A>(
               key: key,
-              builder: (_, a, child) => Container(child: child),
+              builder: (_, a, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });
 
   group('consumer2', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer2<A, B>(
             key: key,
-            builder: (context, value, v2, child) {
+            builder: (context, value, v2, child) sync* {
               mock(Combined(context, child, value, v2));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -133,41 +143,43 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a, b)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer2<A, B>(
               key: key,
-              builder: (_, a, b, child) => Container(child: child),
+              builder: (_, a, b, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });
 
   group('consumer3', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer3<A, B, C>(
             key: key,
-            builder: (context, value, v2, v3, child) {
+            builder: (context, value, v2, v3, child) sync* {
               mock(Combined(context, child, value, v2, v3));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -177,41 +189,43 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a, b, c)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer3<A, B, C>(
               key: key,
-              builder: (_, a, b, c, child) => Container(child: child),
+              builder: (_, a, b, c, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });
 
   group('consumer4', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer4<A, B, C, D>(
             key: key,
-            builder: (context, value, v2, v3, v4, child) {
+            builder: (context, value, v2, v3, v4, child) sync* {
               mock(Combined(context, child, value, v2, v3, v4));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -221,41 +235,43 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a, b, c, d)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer4<A, B, C, D>(
               key: key,
-              builder: (_, a, b, c, d, child) => Container(child: child),
+              builder: (_, a, b, c, d, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });
 
   group('consumer5', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer5<A, B, C, D, E>(
             key: key,
-            builder: (context, value, v2, v3, v4, v5, child) {
+            builder: (context, value, v2, v3, v4, v5, child) sync* {
               mock(Combined(context, child, value, v2, v3, v4, v5));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -265,41 +281,43 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a, b, c, d, e)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer5<A, B, C, D, E>(
               key: key,
-              builder: (_, a, b, c, d, e, child) => Container(child: child),
+              builder: (_, a, b, c, d, e, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });
 
   group('consumer6', () {
-    testWidgets('obtains value from Provider<T>', (tester) async {
-      final key = GlobalKey();
+    test('obtains value from Provider<T>', () async {
+      const key = GlobalKey();
       final child = Container();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: multiProviderNodes,
           child: Consumer6<A, B, C, D, E, F>(
             key: key,
-            builder: (context, value, v2, v3, v4, v5, v6, child) {
+            builder: (context, value, v2, v3, v4, v5, v6, child) sync* {
               mock(Combined(context, child, value, v2, v3, v4, v5, v6));
-              return Container();
+              yield Container();
             },
             child: child,
           ),
@@ -309,24 +327,26 @@ void main() {
       verify(mock(Combined(key.currentContext, child, a, b, c, d, e, f)));
     });
 
-    testWidgets('can be used inside MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('can be used inside MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ...multiProviderNodes,
             Consumer6<A, B, C, D, E, F>(
               key: key,
-              builder: (_, a, b, c, d, e, f, child) => Container(child: child),
+              builder: (_, a, b, c, d, e, f, child) sync* {
+                yield Container(child: child);
+              },
             )
           ],
-          child: const Text('foo', textDirection: TextDirection.ltr),
+          child: const Text('foo'),
         ),
       );
 
-      expect(find.text('foo'), findsOneWidget);
-      expect(find.byType(Container), findsOneWidget);
+      expect(find.text('foo'), findsOneComponent);
+      expect(find.byType(Container), findsOneComponent);
       expect(key.currentContext, isNotNull);
     });
   });

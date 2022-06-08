@@ -1,78 +1,77 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart';
-
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'common.dart';
 
 void main() {
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
   group('ChangeNotifierProvider', () {
-    testWidgets('value', (tester) async {
+    test('value', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ChangeNotifierProvider.value(value: myNotifier),
           ],
           child: Consumer<ValueNotifier<int>>(
-            builder: (_, value, __) {
-              return Text(
-                value.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       // would throw if myNotifier is disposed
       myNotifier.notifyListeners();
     });
 
-    testWidgets('builder', (tester) async {
+    test('builder', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => myNotifier),
           ],
           child: Consumer<ValueNotifier<int>>(
-            builder: (_, value, __) {
-              return Text(
-                value.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder1', (tester) async {
+    test('builder1', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -82,32 +81,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder2', (tester) async {
+    test('builder2', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -118,32 +114,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder3', (tester) async {
+    test('builder3', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -155,32 +148,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder4', (tester) async {
+    test('builder4', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -193,32 +183,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder5', (tester) async {
+    test('builder5', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -232,32 +219,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder6', (tester) async {
+    test('builder6', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => A()),
@@ -272,32 +256,29 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
 
-    testWidgets('builder0', (tester) async {
+    test('builder0', () async {
       final myNotifier = ValueNotifier<int>(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             ChangeNotifierProxyProvider0<ValueNotifier<int>?>(
@@ -306,53 +287,47 @@ void main() {
             ),
           ],
           child: Consumer<ValueNotifier<int>?>(
-            builder: (_, value, __) {
-              return Text(
-                value!.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+            builder: (_, value, __) sync* {
+              yield Text(value!.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       myNotifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       expect(myNotifier.notifyListeners, throwsAssertionError);
     });
   });
 
-  testWidgets('Use builder property, not child', (tester) async {
+  test('Use builder property, not child', () async {
     final myNotifier = ValueNotifier<int>(0);
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       ChangeNotifierProvider<ValueNotifier<int>>(
         create: (context) => myNotifier,
-        builder: (context, _) {
+        builder: (context, _) sync* {
           final notifier = context.watch<ValueNotifier<int>>();
-          return Text(
-            '${notifier.value}',
-            textDirection: TextDirection.ltr,
-          );
+          yield Text('${notifier.value}');
         },
       ),
     );
 
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsOneComponent);
 
     myNotifier.value++;
     await tester.pump();
 
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('1'), findsOneComponent);
 
-    await tester.pumpWidget(Container());
+    await tester.pumpComponent(Container());
 
     expect(myNotifier.notifyListeners, throwsAssertionError);
   });

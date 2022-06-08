@@ -1,9 +1,7 @@
-// ignore_for_file: invalid_use_of_protected_member
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'common.dart';
 
@@ -19,20 +17,27 @@ void main() {
   final f = F();
 
   final combinedConsumerMock = MockCombinedBuilder();
-  setUp(() => when(combinedConsumerMock(any)).thenReturn(Container()));
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
+  setUp(() => when(combinedConsumerMock(any)).thenReturn([Container()]));
   tearDown(() {
     clearInteractions(combinedConsumerMock);
   });
 
   final mockConsumer = Consumer<_ListenableCombined>(
-    builder: (context, combined, child) => combinedConsumerMock(combined),
+    builder: (context, combined, child) {
+      return combinedConsumerMock(combined);
+    },
   );
 
   group('ListenableProxyProvider', () {
-    testWidgets('rebuilds dependendents when listeners are called',
-        (tester) async {
+    test('rebuilds dependendents when listeners are called', () async {
       final notifier = ValueNotifier(0);
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: 0),
@@ -41,37 +46,36 @@ void main() {
               update: (_, count, value) => value!,
             )
           ],
-          child: Consumer<ValueNotifier<int>>(builder: (_, value, __) {
-            return Text(
+          child: Consumer<ValueNotifier<int>>(builder: (_, value, __) sync* {
+            yield Text(
               value.value.toString(),
-              textDirection: TextDirection.ltr,
             );
           }),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
       expect(find.text('1'), findsNothing);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
       expect(find.text('0'), findsNothing);
     });
 
-    testWidgets(
+    test(
       'update returning a new Listenable disposes the previously created value'
       ' and update dependents',
-      (tester) async {
+      () async {
         final builder = MockConsumerBuilder<MockNotifier>();
-        when(builder(any, any, any)).thenReturn(Container());
+        when(builder(any, any, any)).thenReturn([Container()]);
         final child = Consumer<MockNotifier>(builder: builder);
 
         final dispose = DisposeMock<MockNotifier>();
         final notifier = MockNotifier();
         when(notifier.hasListeners).thenReturn(false);
-        await tester.pumpWidget(
+        await tester.pumpComponent(
           MultiProvider(
             providers: [
               Provider.value(value: 0),
@@ -89,7 +93,7 @@ void main() {
         final dispose2 = DisposeMock<MockNotifier>();
         final notifier2 = MockNotifier();
         when(notifier2.hasListeners).thenReturn(false);
-        await tester.pumpWidget(
+        await tester.pumpComponent(
           MultiProvider(
             providers: [
               Provider.value(value: 1),
@@ -108,19 +112,19 @@ void main() {
         verifyNoMoreInteractions(dispose);
         verifyNoMoreInteractions(dispose2);
 
-        await tester.pumpWidget(Container());
+        await tester.pumpComponent(Container());
 
         verify(dispose2(argThat(isNotNull), notifier2)).called(1);
         verifyNoMoreInteractions(dispose);
         verifyNoMoreInteractions(dispose2);
       },
     );
-    testWidgets('disposes of created value', (tester) async {
+    test('disposes of created value', () async {
       final dispose = DisposeMock<ValueNotifier<int>>();
       final notifier = ValueNotifier(0);
-      final key = GlobalKey();
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: 0),
@@ -137,7 +141,7 @@ void main() {
 
       verifyZeroInteractions(dispose);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       verify(dispose(argThat(isNotNull), notifier)).called(1);
       verifyNoMoreInteractions(dispose);
@@ -145,10 +149,9 @@ void main() {
   });
 
   group('ListenableProxyProvider variants', () {
-    InheritedContext<Combined?> findInheritedProvider() =>
-        findInheritedContext<Combined>();
-    testWidgets('ListenableProxyProvider', (tester) async {
-      await tester.pumpWidget(
+    InheritedContext<Combined?> findInheritedProvider() => findInheritedContext<Combined>();
+    test('ListenableProxyProvider', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -193,8 +196,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ListenableProxyProvider2', (tester) async {
-      await tester.pumpWidget(
+    test('ListenableProxyProvider2', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -205,8 +208,7 @@ void main() {
             Provider.value(value: f),
             ListenableProxyProvider2<A, B, _ListenableCombined>(
               create: (_) => _ListenableCombined(),
-              update: (context, a, b, previous) =>
-                  _ListenableCombined(context, previous, a, b),
+              update: (context, a, b, previous) => _ListenableCombined(context, previous, a, b),
             )
           ],
           child: mockConsumer,
@@ -222,8 +224,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ListenableProxyProvider3', (tester) async {
-      await tester.pumpWidget(
+    test('ListenableProxyProvider3', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -234,8 +236,7 @@ void main() {
             Provider.value(value: f),
             ListenableProxyProvider3<A, B, C, _ListenableCombined>(
               create: (_) => _ListenableCombined(),
-              update: (context, a, b, c, previous) =>
-                  _ListenableCombined(context, previous, a, b, c),
+              update: (context, a, b, c, previous) => _ListenableCombined(context, previous, a, b, c),
             )
           ],
           child: mockConsumer,
@@ -251,8 +252,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ListenableProxyProvider4', (tester) async {
-      await tester.pumpWidget(
+    test('ListenableProxyProvider4', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -263,8 +264,7 @@ void main() {
             Provider.value(value: f),
             ListenableProxyProvider4<A, B, C, D, _ListenableCombined>(
               create: (_) => _ListenableCombined(),
-              update: (context, a, b, c, d, previous) =>
-                  _ListenableCombined(context, previous, a, b, c, d),
+              update: (context, a, b, c, d, previous) => _ListenableCombined(context, previous, a, b, c, d),
             )
           ],
           child: mockConsumer,
@@ -280,8 +280,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ListenableProxyProvider5', (tester) async {
-      await tester.pumpWidget(
+    test('ListenableProxyProvider5', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -292,8 +292,7 @@ void main() {
             Provider.value(value: f),
             ListenableProxyProvider5<A, B, C, D, E, _ListenableCombined>(
               create: (_) => _ListenableCombined(),
-              update: (context, a, b, c, d, e, previous) =>
-                  _ListenableCombined(context, previous, a, b, c, d, e),
+              update: (context, a, b, c, d, e, previous) => _ListenableCombined(context, previous, a, b, c, d, e),
             )
           ],
           child: mockConsumer,
@@ -309,8 +308,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ListenableProxyProvider6', (tester) async {
-      await tester.pumpWidget(
+    test('ListenableProxyProvider6', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -321,8 +320,7 @@ void main() {
             Provider.value(value: f),
             ListenableProxyProvider6<A, B, C, D, E, F, _ListenableCombined>(
               create: (_) => _ListenableCombined(),
-              update: (context, a, b, c, d, e, f, previous) =>
-                  _ListenableCombined(context, previous, a, b, c, d, e, f),
+              update: (context, a, b, c, d, e, f, previous) => _ListenableCombined(context, previous, a, b, c, d, e, f),
             )
           ],
           child: mockConsumer,

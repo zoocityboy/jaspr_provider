@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:developer';
 
-import 'package:flutter/widgets.dart';
+import 'package:jaspr/jaspr.dart';
 
 import 'provider.dart';
 
@@ -29,18 +30,13 @@ DeferredStartListening<Stream<T>?, T> _streamStartListening<T>({
         if (catchError != null) {
           setState(catchError(e, error));
         } else {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              library: 'provider',
-              exception: FlutterError('''
+          log('''
 An exception was throw by ${controller.runtimeType} listened by
 StreamProvider<$T>, but no `catchError` was provided.
 
 Exception:
 $error
-'''),
-            ),
-          );
+''');
         }
       },
     );
@@ -51,7 +47,7 @@ $error
 
 /// Listens to a [Stream] and exposes its content to `child` and descendants.
 ///
-/// Its main use-case is to provide to a large number of a widget the content
+/// Its main use-case is to provide to a large number of a component the content
 /// of a [Stream], without caring about reacting to events.
 /// A typical example would be to expose the battery level, or a Firebase query.
 ///
@@ -84,7 +80,7 @@ class StreamProvider<T> extends DeferredInheritedProvider<Stream<T>?, T> {
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -107,7 +103,7 @@ class StreamProvider<T> extends DeferredInheritedProvider<Stream<T>?, T> {
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super.value(
           key: key,
           lazy: lazy,
@@ -147,18 +143,13 @@ DeferredStartListening<Future<T>?, T> _futureStartListening<T>({
         if (catchError != null) {
           setState(catchError(e, error));
         } else {
-          FlutterError.reportError(
-            FlutterErrorDetails(
-              library: 'provider',
-              exception: FlutterError('''
+          log('''
 An exception was throw by ${controller.runtimeType} listened by
 FutureProvider<$T>, but no `catchError` was provided.
 
 Exception:
 $error
-'''),
-            ),
-          );
+''');
         }
       },
     );
@@ -189,7 +180,7 @@ class FutureProvider<T> extends DeferredInheritedProvider<Future<T>?, T> {
     UpdateShouldNotify<T>? updateShouldNotify,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -211,7 +202,7 @@ class FutureProvider<T> extends DeferredInheritedProvider<Future<T>?, T> {
     ErrorBuilder<T>? catchError,
     UpdateShouldNotify<T>? updateShouldNotify,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super.value(
           key: key,
           builder: builder,

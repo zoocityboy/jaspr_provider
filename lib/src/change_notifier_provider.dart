@@ -1,4 +1,4 @@
-import 'package:flutter/widgets.dart';
+import 'package:jaspr/jaspr.dart';
 
 import 'listenable_provider.dart';
 import 'provider.dart';
@@ -98,7 +98,7 @@ import 'proxy_provider.dart';
 class ChangeNotifierProvider<T extends ChangeNotifier?>
     extends ListenableProvider<T> {
   /// Creates a [ChangeNotifier] using `create` and automatically
-  /// disposes it when [ChangeNotifierProvider] is removed from the widget tree.
+  /// disposes it when [ChangeNotifierProvider] is removed from the component tree.
   ///
   /// `create` must not be `null`.
   ChangeNotifierProvider({
@@ -106,7 +106,7 @@ class ChangeNotifierProvider<T extends ChangeNotifier?>
     required Create<T> create,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -121,7 +121,7 @@ class ChangeNotifierProvider<T extends ChangeNotifier?>
     Key? key,
     required T value,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super.value(
           key: key,
           builder: builder,
@@ -217,7 +217,7 @@ class ChangeNotifierProxyProvider<T, R extends ChangeNotifier?>
     required ProxyProviderBuilder<T, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -239,7 +239,7 @@ class ChangeNotifierProxyProvider0<R extends ChangeNotifier?>
     required R Function(BuildContext, R? value) update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -261,7 +261,7 @@ class ChangeNotifierProxyProvider2<T, T2, R extends ChangeNotifier?>
     required ProxyProviderBuilder2<T, T2, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -283,7 +283,7 @@ class ChangeNotifierProxyProvider3<T, T2, T3, R extends ChangeNotifier?>
     required ProxyProviderBuilder3<T, T2, T3, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -305,7 +305,7 @@ class ChangeNotifierProxyProvider4<T, T2, T3, T4, R extends ChangeNotifier?>
     required ProxyProviderBuilder4<T, T2, T3, T4, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -327,7 +327,7 @@ class ChangeNotifierProxyProvider5<T, T2, T3, T4, T5, R extends ChangeNotifier?>
     required ProxyProviderBuilder5<T, T2, T3, T4, T5, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,
@@ -350,7 +350,7 @@ class ChangeNotifierProxyProvider6<T, T2, T3, T4, T5, T6,
     required ProxyProviderBuilder6<T, T2, T3, T4, T5, T6, R> update,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           create: create,

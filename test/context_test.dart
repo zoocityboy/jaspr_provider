@@ -1,549 +1,365 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'dart:async';
+
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_provider/src/value_listenable_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'common.dart';
 
 void main() {
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+  
   group('context.watch<T?>', () {
-    testWidgets('can watch T', (tester) async {
+    test('can watch T', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
+            builder: (context) sync* {
               final notifier = context.watch<ValueNotifier<int>?>();
 
-              return Text(
-                notifier?.value.toString() ?? '',
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(notifier?.value.toString() ?? '');
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('can watch T?', (tester) async {
+    test('can watch T?', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
+            builder: (context) sync* {
               final notifier = context.watch<ValueNotifier<int>?>();
 
-              return Text(
-                notifier?.value.toString() ?? '',
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(notifier?.value.toString() ?? '');
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('handles provider missing', (tester) async {
-      await tester.pumpWidget(
+    test('handles provider missing', () async {
+      await tester.pumpComponent(
         Builder(
-          builder: (context) {
+          builder: (context) sync* {
             final notifier = context.watch<ValueNotifier<int>?>();
 
-            return Text(
-              notifier?.value.toString() ?? '',
-              textDirection: TextDirection.ltr,
-            );
+            yield Text(notifier?.value.toString() ?? '');
           },
         ),
       );
 
-      expect(find.text(''), findsOneWidget);
+      expect(find.text(''), findsOneComponent);
     });
 
-    testWidgets(
-        'supports relocating with GlobalKey from no provider to a provider',
-        (tester) async {
+    test('supports relocating with GlobalKey from no provider to a provider', () async {
       final widget = Builder(
-        key: GlobalKey(),
-        builder: (context) {
+        key: const GlobalKey(),
+        builder: (context) sync* {
           final notifier = context.watch<ValueNotifier<int>?>();
 
-          return Text(
-            notifier?.value.toString() ?? '',
-            textDirection: TextDirection.ltr,
-          );
+          yield Text(notifier?.value.toString() ?? '');
         },
       );
 
-      await tester.pumpWidget(widget);
+      await tester.pumpComponent(widget);
 
-      expect(find.text(''), findsOneWidget);
+      expect(find.text(''), findsOneComponent);
 
       final notifier = ValueNotifier(0);
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: widget,
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
   });
 
   group('context.watch<T>', () {
-    testWidgets('can watch T?', (tester) async {
+    test('can watch T?', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
+            builder: (context) sync* {
               final notifier = context.watch<ValueNotifier<int>>();
 
-              return Text(
-                notifier.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(notifier.value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('on T? will throw ProvierNullException if the result is null',
-        (tester) async {
-      Object? err;
-      final onError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        err = details.exception;
-      };
+    test('on T? will throw ProvierNullException if the result is null', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            ChangeNotifierProvider<ValueNotifier<int>?>.value(
+              value: null,
+              child: Builder(
+                builder: (context) sync* {
+                  final notifier = context.watch<ValueNotifier<int>>();
 
-      await tester.pumpWidget(
-        ChangeNotifierProvider<ValueNotifier<int>?>.value(
-          value: null,
-          child: Builder(
-            builder: (context) {
-              final notifier = context.watch<ValueNotifier<int>>();
-
-              return Text(
-                notifier.value.toString(),
-                textDirection: TextDirection.ltr,
-              );
-            },
-          ),
-        ),
+                  yield Text(notifier.value.toString());
+                },
+              ),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isA<ProviderNullException>());
+        },
       );
-
-      FlutterError.onError = onError;
-
-      expect(err, isA<ProviderNullException>());
     }, skip: !isSoundMode);
   });
 
   group('context.select<T?>', () {
-    testWidgets('can watch T', (tester) async {
+    test('can watch T', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
-              final value =
-                  context.select<ValueNotifier<int>?, int?>((n) => n?.value);
+            builder: (context) sync* {
+              final value = context.select<ValueNotifier<int>?, int?>((n) => n?.value);
 
-              return Text(
-                value?.toString() ?? '',
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(value?.toString() ?? '');
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('can watch T?', (tester) async {
+    test('can watch T?', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
-              final value =
-                  context.select<ValueNotifier<int>?, int?>((n) => n?.value);
+            builder: (context) sync* {
+              final value = context.select<ValueNotifier<int>?, int?>((n) => n?.value);
 
-              return Text(
-                value?.toString() ?? '',
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(value?.toString() ?? '');
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('handles provider missing', (tester) async {
-      await tester.pumpWidget(
+    test('handles provider missing', () async {
+      await tester.pumpComponent(
         Builder(
-          builder: (context) {
-            final value =
-                context.select<ValueNotifier<int>?, int?>((n) => n?.value);
+          builder: (context) sync* {
+            final value = context.select<ValueNotifier<int>?, int?>((n) => n?.value);
 
-            return Text(
+            yield Text(
               value?.toString() ?? '',
-              textDirection: TextDirection.ltr,
             );
           },
         ),
       );
 
-      expect(find.text(''), findsOneWidget);
+      expect(find.text(''), findsOneComponent);
     });
 
-    testWidgets(
-        'supports relocating with GlobalKey from no provider to a provider',
-        (tester) async {
+    test('supports relocating with GlobalKey from no provider to a provider', () async {
       final widget = Builder(
-        key: GlobalKey(),
-        builder: (context) {
-          final value =
-              context.select<ValueNotifier<int>?, int?>((n) => n?.value);
+        key: const GlobalKey(),
+        builder: (context) sync* {
+          final value = context.select<ValueNotifier<int>?, int?>((n) => n?.value);
 
-          return Text(
-            value?.toString() ?? '',
-            textDirection: TextDirection.ltr,
-          );
+          yield Text(value?.toString() ?? '');
         },
       );
 
-      await tester.pumpWidget(widget);
+      await tester.pumpComponent(widget);
 
-      expect(find.text(''), findsOneWidget);
+      expect(find.text(''), findsOneComponent);
 
       final notifier = ValueNotifier(0);
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: widget,
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
   });
 
   group('context.select<T>', () {
-    testWidgets('can watch T?', (tester) async {
+    test('can watch T?', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>?>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
-              final value =
-                  context.select<ValueNotifier<int>, int>((n) => n.value);
+            builder: (context) sync* {
+              final value = context.select<ValueNotifier<int>, int>((n) => n.value);
 
-              return Text(
-                value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('can watch T', (tester) async {
+    test('can watch T', () async {
       final notifier = ValueNotifier(0);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider<ValueNotifier<int>>.value(
           value: notifier,
           child: Builder(
-            builder: (context) {
-              final value =
-                  context.select<ValueNotifier<int>, int>((n) => n.value);
+            builder: (context) sync* {
+              final value = context.select<ValueNotifier<int>, int>((n) => n.value);
 
-              return Text(
-                value.toString(),
-                textDirection: TextDirection.ltr,
-              );
+              yield Text(value.toString());
             },
           ),
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       notifier.value++;
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
     });
 
-    testWidgets('on T? will throw ProvierNullException if the result is null',
-        (tester) async {
-      Object? err;
-      final onError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        err = details.exception;
-      };
+    test('on T? will throw ProvierNullException if the result is null', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            ChangeNotifierProvider<ValueNotifier<int>?>.value(
+              value: null,
+              child: Builder(
+                builder: (context) sync* {
+                  final value = context.select<ValueNotifier<int>, int>((n) => n.value);
 
-      await tester.pumpWidget(
-        ChangeNotifierProvider<ValueNotifier<int>?>.value(
-          value: null,
-          child: Builder(
-            builder: (context) {
-              final value =
-                  context.select<ValueNotifier<int>, int>((n) => n.value);
-
-              return Text(
-                value.toString(),
-                textDirection: TextDirection.ltr,
-              );
-            },
-          ),
-        ),
-      );
-
-      FlutterError.onError = onError;
-
-      expect(err, isA<ProviderNullException>());
-    });
-
-    testWidgets('on T? will throw ProvierNullException if new value is null',
-        (tester) async {
-      Object? err;
-
-      final child = Builder(
-        builder: (context) {
-          final value = context.select<ValueNotifier<int>, int>((n) => n.value);
-
-          return Text(
-            value.toString(),
-            textDirection: TextDirection.ltr,
+                  yield Text(value.toString());
+                },
+              ),
+            ),
           );
         },
+        (error, stack) {
+          expect(error, isA<ProviderNullException>());
+        },
       );
-
-      await tester.pumpWidget(
-        ChangeNotifierProvider<ValueNotifier<int>?>.value(
-          value: ValueNotifier(0),
-          child: child,
-        ),
-      );
-
-      expect(find.text('0'), findsOneWidget);
-
-      final onError = FlutterError.onError;
-      FlutterError.onError = (details) {
-        err = details.exception;
-      };
-
-      await tester.pumpWidget(
-        ChangeNotifierProvider<ValueNotifier<int>?>.value(
-          value: null,
-          child: child,
-        ),
-      );
-
-      FlutterError.onError = onError;
-
-      expect(err, isA<ProviderNullException>());
     });
-  });
 
-  testWidgets('watch in layoutbuilder', (tester) async {
-    await tester.pumpWidget(
-      Provider(
-        create: (_) => 42,
-        child: LayoutBuilder(builder: (context, _) {
-          return Text(
-            context.watch<int>().toString(),
-            textDirection: TextDirection.ltr,
-          );
-        }),
-      ),
-    );
+    test('on T? will throw ProvierNullException if new value is null', () async {
+      await runZonedGuarded(
+        () async {
+          final child = Builder(
+            builder: (context) sync* {
+              final value = context.select<ValueNotifier<int>, int>((n) => n.value);
 
-    expect(find.text('42'), findsOneWidget);
-  });
-
-  testWidgets('select in layoutbuilder', (tester) async {
-    await tester.pumpWidget(
-      Provider(
-        create: (_) => 42,
-        child: LayoutBuilder(builder: (context, _) {
-          return Text(
-            context.select((int i) => '$i'),
-            textDirection: TextDirection.ltr,
-          );
-        }),
-      ),
-    );
-
-    expect(find.text('42'), findsOneWidget);
-  });
-
-  testWidgets('cannot select in listView', (tester) async {
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: Provider(
-          create: (_) => 0,
-          child: ListView.builder(
-            itemCount: 1,
-            itemBuilder: (context, index) {
-              return Text(context.select((int v) => '$v'));
+              yield Text(value.toString());
             },
-          ),
-        ),
-      ),
-    );
+          );
 
-    expect(
-      tester.takeException(),
-      isAssertionError.having(
-          (s) => s.message,
-          'message',
-          contains(
-            'Tried to use context.select inside a SliverList/SliderGridView.',
-          )),
-    );
-  });
-
-  testWidgets('watch in listView', (tester) async {
-    final notifier = ValueNotifier([0, 0]);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: ChangeNotifierProvider(
-          create: (_) => notifier,
-          child: ListView.builder(
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              return Text(
-                context
-                    .watch<ValueNotifier<List<int>>>()
-                    .value[index]
-                    .toString(),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-
-    expect(find.text('0'), findsNWidgets(2));
-
-    notifier.value = [1, 0];
-
-    await tester.pump();
-
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
-  });
-
-  testWidgets('watch in gridView', (tester) async {
-    final notifier = ValueNotifier([0, 0]);
-
-    await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: ChangeNotifierProvider(
-          create: (_) => notifier,
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+          await tester.pumpComponent(
+            ChangeNotifierProvider<ValueNotifier<int>?>.value(
+              value: ValueNotifier(0),
+              child: child,
             ),
-            itemCount: 2,
-            itemBuilder: (context, index) {
-              return Text(
-                context
-                    .watch<ValueNotifier<List<int>>>()
-                    .value[index]
-                    .toString(),
-              );
-            },
-          ),
-        ),
-      ),
-    );
+          );
 
-    expect(find.text('0'), findsNWidgets(2));
+          expect(find.text('0'), findsOneComponent);
 
-    notifier.value = [1, 0];
-
-    await tester.pump();
-
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
+          await tester.pumpComponent(
+            ChangeNotifierProvider<ValueNotifier<int>?>.value(
+              value: null,
+              child: child,
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isA<ProviderNullException>());
+        },
+      );
+    });
   });
 
   group('BuildContext', () {
-    testWidgets('internal selected value is updated', (tester) async {
+    test('internal selected value is updated', () async {
       final notifier = ValueNotifier([false, false, false]);
 
       final callCounts = <int, int>{
@@ -552,83 +368,79 @@ void main() {
         2: 0,
       };
 
-      Widget buildIndex(int index) {
-        return Builder(builder: (c) {
+      Component buildIndex(int index) {
+        return Builder(builder: (c) sync* {
           callCounts[index] = callCounts[index]! + 1;
-          final selected =
-              c.select<ValueNotifier<List<bool>>, bool>((notifier) {
+          final selected = c.select<ValueNotifier<List<bool>>, bool>((notifier) {
             return notifier.value[index];
           });
-          return Text('$index $selected');
+          yield Text('$index $selected');
         });
       }
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider(
           create: (_) => notifier,
-          child: Directionality(
-            textDirection: TextDirection.ltr,
-            child: Column(
-              children: [
-                buildIndex(0),
-                buildIndex(1),
-                buildIndex(2),
-              ],
-            ),
+          child: Builder(
+            builder: (context) sync* {
+              yield buildIndex(0);
+              yield buildIndex(1);
+              yield buildIndex(2);
+            },
           ),
         ),
       );
 
-      expect(find.text('0 false'), findsOneWidget);
+      expect(find.text('0 false'), findsOneComponent);
       expect(callCounts[0], 1);
-      expect(find.text('1 false'), findsOneWidget);
+      expect(find.text('1 false'), findsOneComponent);
       expect(callCounts[1], 1);
-      expect(find.text('2 false'), findsOneWidget);
+      expect(find.text('2 false'), findsOneComponent);
       expect(callCounts[2], 1);
 
       notifier.value = [false, true, false];
       await tester.pump();
 
-      expect(find.text('0 false'), findsOneWidget);
+      expect(find.text('0 false'), findsOneComponent);
       expect(callCounts[0], 1);
-      expect(find.text('1 true'), findsOneWidget);
+      expect(find.text('1 true'), findsOneComponent);
       expect(callCounts[1], 2);
-      expect(find.text('2 false'), findsOneWidget);
+      expect(find.text('2 false'), findsOneComponent);
       expect(callCounts[2], 1);
 
       notifier.value = [false, false, false];
       await tester.pump();
 
-      expect(find.text('0 false'), findsOneWidget);
+      expect(find.text('0 false'), findsOneComponent);
       expect(callCounts[0], 1);
-      expect(find.text('1 false'), findsOneWidget);
+      expect(find.text('1 false'), findsOneComponent);
       expect(callCounts[1], 3);
-      expect(find.text('2 false'), findsOneWidget);
+      expect(find.text('2 false'), findsOneComponent);
       expect(callCounts[2], 1);
 
       notifier.value = [true, false, false];
       await tester.pump();
 
-      expect(find.text('0 true'), findsOneWidget);
+      expect(find.text('0 true'), findsOneComponent);
       expect(callCounts[0], 2);
-      expect(find.text('1 false'), findsOneWidget);
+      expect(find.text('1 false'), findsOneComponent);
       expect(callCounts[1], 3);
-      expect(find.text('2 false'), findsOneWidget);
+      expect(find.text('2 false'), findsOneComponent);
       expect(callCounts[2], 1);
 
       notifier.value = [true, false, false];
       await tester.pump();
 
-      expect(find.text('0 true'), findsOneWidget);
+      expect(find.text('0 true'), findsOneComponent);
       expect(callCounts[0], 2);
-      expect(find.text('1 false'), findsOneWidget);
+      expect(find.text('1 false'), findsOneComponent);
       expect(callCounts[1], 3);
-      expect(find.text('2 false'), findsOneWidget);
+      expect(find.text('2 false'), findsOneComponent);
       expect(callCounts[2], 1);
     });
 
-    testWidgets('create can use read without being lazy', (tester) async {
-      await tester.pumpWidget(
+    test('create can use read without being lazy', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (context) => 42),
@@ -638,18 +450,17 @@ void main() {
             ),
           ],
           child: Consumer<String>(
-            builder: (c, value, _) {
-              return Text(value, textDirection: TextDirection.ltr);
+            builder: (c, value, _) sync* {
+              yield Text(value);
             },
           ),
         ),
       );
 
-      expect(find.text('42'), findsOneWidget);
+      expect(find.text('42'), findsOneComponent);
     });
-    testWidgets('watch can be used inside InheritedProvider.update',
-        (tester) async {
-      await tester.pumpWidget(
+    test('watch can be used inside InheritedProvider.update', () async {
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: InheritedProvider<String>(
@@ -657,18 +468,16 @@ void main() {
               return c.watch<int>().toString();
             },
             child: Consumer<String>(
-              builder: (c, value, _) {
-                return Text(value, textDirection: TextDirection.ltr);
+              builder: (c, value, _) sync* {
+                yield Text(value);
               },
             ),
           ),
         ),
       );
     });
-    testWidgets(
-        "select doesn't fail if it loads a provider that depends on other providers",
-        (tester) async {
-      await tester.pumpWidget(
+    test("select doesn't fail if it loads a provider that depends on other providers", () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider(create: (_) => 42),
@@ -678,31 +487,29 @@ void main() {
             ),
           ],
           child: Builder(
-            builder: (context) {
+            builder: (context) sync* {
               final value = context.select((String value) => value);
-              return Text(value, textDirection: TextDirection.ltr);
+              yield Text(value);
             },
           ),
         ),
       );
 
-      expect(find.text('84'), findsOneWidget);
+      expect(find.text('84'), findsOneComponent);
     });
 
-    testWidgets("don't call old selectors if the child rebuilds individually",
-        (tester) async {
+    test("don't call old selectors if the child rebuilds individually", () async {
       final notifier = ValueNotifier(0);
 
       var buildCount = 0;
-      final selector =
-          MockSelector.identity<ValueNotifier<int>>(ValueNotifier(0));
-      final child = Builder(builder: (c) {
+      final selector = MockSelector.identity<ValueNotifier<int>>(ValueNotifier(0));
+      final child = Builder(builder: (c) sync* {
         buildCount++;
         c.select<ValueNotifier<int>, ValueNotifier<int>>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ChangeNotifierProvider.value(
           value: notifier,
           child: child,
@@ -713,7 +520,7 @@ void main() {
       verify(selector(notifier)).called(1);
       verifyNoMoreInteractions(selector);
 
-      tester.element(find.byWidget(child)).markNeedsBuild();
+      find.byComponent(child).evaluate().first.markNeedsBuild();
       await tester.pump();
 
       expect(buildCount, 2);
@@ -728,226 +535,259 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('selects throws inside click handlers', (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: Builder(builder: (context) {
-            return GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                context.select((int a) => a);
-              },
-              child: Container(),
-            );
-          }),
-        ),
+    test('selects throws inside click handlers', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: Builder(builder: (context) sync* {
+                yield GestureDetector(
+                  onTap: () {
+                    context.select((int a) => a);
+                  },
+                  child: Container(),
+                );
+              }),
+            ),
+          );
+
+          await tester.click(find.byType(GestureDetector));
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
       );
-
-      expect(tester.takeException(), isNull);
-      await tester.tap(find.byType(GestureDetector));
-
-      expect(tester.takeException(), isAssertionError);
     });
 
-    testWidgets('select throws if try to read dynamic', (tester) async {
-      await tester.pumpWidget(
-        Builder(builder: (c) {
-          c.select<dynamic, dynamic>((dynamic i) => i);
-          return Container();
-        }),
+    test('select throws if try to read dynamic', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Builder(builder: (c) sync* {
+              c.select<dynamic, dynamic>((dynamic i) => i);
+              yield Container();
+            }),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
       );
-
-      expect(tester.takeException(), isAssertionError);
     });
 
-    testWidgets('select throws ProviderNotFoundException', (tester) async {
-      await tester.pumpWidget(
-        Builder(builder: (c) {
-          c.select((int i) => i);
-          return Container();
-        }),
+    test('select throws ProviderNotFoundException', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Builder(builder: (c) sync* {
+              c.select((int i) => i);
+              yield Container();
+            }),
+          );
+        },
+        (error, stack) {
+          expect(error, isA<ProviderNotFoundException>());
+        },
       );
-
-      expect(tester.takeException(), isA<ProviderNotFoundException>());
     });
 
-    testWidgets('select throws if watch called inside the callback from build',
-        (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: Builder(builder: (context) {
+    test('select throws if watch called inside the callback from build', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: Builder(builder: (context) sync* {
+                context.select((int i) {
+                  context.watch<int>();
+                  return i;
+                });
+                yield Container();
+              }),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
+    });
+
+    test('select throws if read called inside the callback from build', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: Builder(builder: (context) sync* {
+                context.select((int i) {
+                  context.read<int>();
+                  return i;
+                });
+                yield Container();
+              }),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
+    });
+
+    test('select throws if select called inside the callback from build', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: Builder(builder: (context) sync* {
+                context.select((int i) {
+                  context.select((int i) => i);
+                  return i;
+                });
+                yield Container();
+              }),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
+    });
+
+    test('select throws if read called inside the callback on dependency change', () async {
+      await runZonedGuarded(
+        () async {
+          var shouldCall = false;
+          final child = Builder(builder: (context) sync* {
             context.select((int i) {
-              context.watch<int>();
-              return i;
+              if (shouldCall) {
+                context.read<int>();
+              }
+              // trigger selector call without rebuilding
+              return 0;
             });
-            return Container();
-          }),
-        ),
-      );
+            yield const Text('foo');
+          });
 
-      expect(tester.takeException(), isAssertionError);
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: child,
+            ),
+          );
+
+          expect(find.text('foo'), findsOneComponent);
+          shouldCall = true;
+          await tester.pumpComponent(
+            Provider.value(
+              value: 21,
+              child: child,
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
     });
 
-    testWidgets('select throws if read called inside the callback from build',
-        (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: Builder(builder: (context) {
+    test('select throws if watch called inside the callback on dependency change', () async {
+      await runZonedGuarded(
+        () async {
+          var shouldCall = false;
+          final child = Builder(builder: (context) sync* {
             context.select((int i) {
-              context.read<int>();
-              return i;
+              if (shouldCall) {
+                context.watch<int>();
+              }
+              // trigger selector call without rebuilding
+              return 0;
             });
-            return Container();
-          }),
-        ),
-      );
+            yield const Text('foo');
+          });
 
-      expect(tester.takeException(), isAssertionError);
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: child,
+            ),
+          );
+
+          expect(find.text('foo'), findsOneComponent);
+          shouldCall = true;
+          await tester.pumpComponent(
+            Provider.value(
+              value: 21,
+              child: child,
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
     });
 
-    testWidgets('select throws if select called inside the callback from build',
-        (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: Builder(builder: (context) {
+    test('select throws if select called inside the callback on dependency change', () async {
+      await runZonedGuarded(
+        () async {
+          var shouldCall = false;
+          final child = Builder(builder: (context) sync* {
             context.select((int i) {
-              context.select((int i) => i);
-              return i;
+              if (shouldCall) {
+                context.select((int i) => i);
+              }
+              // trigger selector call without rebuilding
+              return 0;
             });
-            return Container();
-          }),
-        ),
-      );
+            yield const Text('foo');
+          });
 
-      expect(tester.takeException(), isAssertionError);
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: child,
+            ),
+          );
+
+          expect(find.text('foo'), findsOneComponent);
+          shouldCall = true;
+          await tester.pumpComponent(
+            Provider.value(
+              value: 21,
+              child: child,
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
+      );
     });
 
-    testWidgets(
-        'select throws if read called inside the callback on dependency change',
-        (tester) async {
-      var shouldCall = false;
-      final child = Builder(builder: (context) {
-        context.select((int i) {
-          if (shouldCall) {
-            context.read<int>();
-          }
-          // trigger selector call without rebuilding
-          return 0;
-        });
-        return const Text('foo', textDirection: TextDirection.ltr);
-      });
-
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: child,
-        ),
-      );
-
-      expect(find.text('foo'), findsOneWidget);
-      shouldCall = true;
-      await tester.pumpWidget(
-        Provider.value(
-          value: 21,
-          child: child,
-        ),
-      );
-
-      expect(tester.takeException(), isAssertionError);
-    });
-
-    testWidgets(
-        'select throws if watch called inside the callback on dependency change',
-        (tester) async {
-      var shouldCall = false;
-      final child = Builder(builder: (context) {
-        context.select((int i) {
-          if (shouldCall) {
-            context.watch<int>();
-          }
-          // trigger selector call without rebuilding
-          return 0;
-        });
-        return const Text('foo', textDirection: TextDirection.ltr);
-      });
-
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: child,
-        ),
-      );
-
-      expect(find.text('foo'), findsOneWidget);
-      shouldCall = true;
-      await tester.pumpWidget(
-        Provider.value(
-          value: 21,
-          child: child,
-        ),
-      );
-
-      expect(tester.takeException(), isAssertionError);
-    });
-
-    testWidgets(
-        'select throws if select called inside the callback on dependency change',
-        (tester) async {
-      var shouldCall = false;
-      final child = Builder(builder: (context) {
-        context.select((int i) {
-          if (shouldCall) {
-            context.select((int i) => i);
-          }
-          // trigger selector call without rebuilding
-          return 0;
-        });
-        return const Text('foo', textDirection: TextDirection.ltr);
-      });
-
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: child,
-        ),
-      );
-
-      expect(find.text('foo'), findsOneWidget);
-      shouldCall = true;
-      await tester.pumpWidget(
-        Provider.value(
-          value: 21,
-          child: child,
-        ),
-      );
-
-      expect(tester.takeException(), isAssertionError);
-    });
-
-    testWidgets('can call read inside didChangeDependencies', (tester) async {
-      await tester.pumpWidget(
+    test('can call read inside didChangeDependencies', () async {
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: StatefulTest(
             didChangeDependencies: (context) {
               context.read<int>();
             },
-            child: const Text('42', textDirection: TextDirection.ltr),
+            child: const Text('42'),
           ),
         ),
       );
 
-      expect(find.text('42'), findsOneWidget);
+      expect(find.text('42'), findsOneComponent);
     });
 
-    testWidgets('select cannot be called inside didChangeDependencies',
-        (tester) async {
+    test('select cannot be called inside didChangeDependencies', () async {
       Object? error;
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: StatefulTest(
@@ -958,7 +798,9 @@ void main() {
                 error = err;
               }
             },
-            builder: (context) => Container(),
+            builder: (context) sync* {
+              yield Container();
+            },
           ),
         ),
       );
@@ -966,41 +808,51 @@ void main() {
       expect(error, isAssertionError);
     });
 
-    testWidgets('select in initState throws', (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: StatefulTest(
-            initState: (c) {
-              c.select((int i) => i);
-            },
-            child: Container(),
-          ),
-        ),
+    test('select in initState throws', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: StatefulTest(
+                initState: (c) {
+                  c.select((int i) => i);
+                },
+                child: Container(),
+              ),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
       );
-
-      expect(tester.takeException(), isAssertionError);
     });
 
-    testWidgets('watch in initState throws', (tester) async {
-      await tester.pumpWidget(
-        Provider.value(
-          value: 42,
-          child: StatefulTest(
-            initState: (c) {
-              c.watch<int>();
-            },
-            child: Container(),
-          ),
-        ),
+    test('watch in initState throws', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            Provider.value(
+              value: 42,
+              child: StatefulTest(
+                initState: (c) {
+                  c.watch<int>();
+                },
+                child: Container(),
+              ),
+            ),
+          );
+        },
+        (error, stack) {
+          expect(error, isAssertionError);
+        },
       );
-
-      expect(tester.takeException(), isAssertionError);
     });
 
-    testWidgets('read in initState works', (tester) async {
+    test('read in initState works', () async {
       int? value;
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: StatefulTest(
@@ -1015,16 +867,15 @@ void main() {
       expect(value, 42);
     });
 
-    testWidgets('consumer can be removed and selector stops to be called',
-        (tester) async {
+    test('consumer can be removed and selector stops to be called', () async {
       final selector = MockSelector.identity<int>(0);
 
-      final child = Builder(builder: (c) {
+      final child = Builder(builder: (c) sync* {
         c.select<int, int>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 0,
           child: child,
@@ -1034,7 +885,7 @@ void main() {
       verify(selector(0)).called(1);
       verifyNoMoreInteractions(selector);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: Container(),
@@ -1046,7 +897,7 @@ void main() {
       verify(selector(42)).called(1);
       verifyNoMoreInteractions(selector);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 84,
           child: Container(),
@@ -1056,22 +907,22 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('context.select deeply compares maps', (tester) async {
+    test('context.select deeply compares maps', () async {
       final notifier = ValueNotifier(<int, int>{});
 
       var buildCount = 0;
       final selector = MockSelector.identity<Map<int, int>>({});
-      final child = Builder(builder: (c) {
+      final child = Builder(builder: (c) sync* {
         buildCount++;
         c.select<Map<int, int>, Map<int, int>>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableBuilder<Map<int, int>>(
           valueListenable: notifier,
-          builder: (context, value, _) {
-            return Provider.value(
+          builder: (context, value, _) sync* {
+            yield Provider.value(
               value: value,
               child: child,
             );
@@ -1099,22 +950,22 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('context.select deeply compares lists', (tester) async {
+    test('context.select deeply compares lists', () async {
       final notifier = ValueNotifier(<int>[]);
 
       var buildCount = 0;
       final selector = MockSelector.identity<List<int>>([]);
-      final child = Builder(builder: (c) {
+      final child = Builder(builder: (c) sync* {
         buildCount++;
         c.select<List<int>, List<int>>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableBuilder<List<int>>(
           valueListenable: notifier,
-          builder: (context, value, _) {
-            return Provider.value(
+          builder: (context, value, _) sync* {
+            yield Provider.value(
               value: value,
               child: child,
             );
@@ -1141,22 +992,22 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('context.select deeply compares iterables', (tester) async {
+    test('context.select deeply compares iterables', () async {
       final notifier = ValueNotifier<Iterable<int>>(<int>[]);
 
       var buildCount = 0;
       final selector = MockSelector.identity<Iterable<int>>({});
-      final child = Builder(builder: (c) {
+      final child = Builder(builder: (c) sync* {
         buildCount++;
         c.select<Iterable<int>, Iterable<int>>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableBuilder<Iterable<int>>(
           valueListenable: notifier,
-          builder: (context, value, _) {
-            return Provider.value(
+          builder: (context, value, _) sync* {
+            yield Provider.value(
               value: value,
               child: child,
             );
@@ -1183,22 +1034,22 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('context.select deeply compares sets', (tester) async {
+    test('context.select deeply compares sets', () async {
       final notifier = ValueNotifier<Set<int>>(<int>{});
 
       var buildCount = 0;
       final selector = MockSelector.identity<Set<int>>({});
-      final child = Builder(builder: (c) {
+      final child = Builder(builder: (c) sync* {
         buildCount++;
         c.select<Set<int>, Set<int>>(selector);
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableBuilder<Set<int>>(
           valueListenable: notifier,
-          builder: (context, value, _) {
-            return Provider.value(
+          builder: (context, value, _) sync* {
+            yield Provider.value(
               value: value,
               child: child,
             );
@@ -1225,61 +1076,59 @@ void main() {
       verifyNoMoreInteractions(selector);
     });
 
-    testWidgets('context.watch listens to value changes', (tester) async {
-      final child = Builder(builder: (context) {
+    test('context.watch listens to value changes', () async {
+      final child = Builder(builder: (context) sync* {
         final value = context.watch<int>();
-        return Text('$value', textDirection: TextDirection.ltr);
+        yield Text('$value');
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 42,
           child: child,
         ),
       );
 
-      expect(find.text('42'), findsOneWidget);
+      expect(find.text('42'), findsOneComponent);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         Provider.value(
           value: 24,
           child: child,
         ),
       );
 
-      expect(find.text('24'), findsOneWidget);
+      expect(find.text('24'), findsOneComponent);
     });
   });
 
-  testWidgets('clears select dependencies for all dependents', (tester) async {
+  test('clears select dependencies for all dependents', () async {
     var buildCountChild1 = 0;
     var buildCountChild2 = 0;
 
     final select1 = MockSelector<int, int>(0, (v) => 0);
     final select2 = MockSelector<int, int>(0, (v) => 0);
 
-    Widget build(int value) {
+    Component build(int value) {
       return Provider.value(
-        value: value,
-        child: Stack(
-          textDirection: TextDirection.ltr,
-          children: <Widget>[
-            Builder(builder: (c) {
-              buildCountChild1++;
-              c.select<int, int>(select1.call);
-              return Container();
-            }),
-            Builder(builder: (c) {
-              buildCountChild2++;
-              c.select<int, int>(select2.call);
-              return Container();
-            }),
-          ],
-        ),
-      );
+          value: value,
+          child: Builder(
+            builder: (context) sync* {
+              yield Builder(builder: (c) sync* {
+                buildCountChild1++;
+                c.select<int, int>(select1.call);
+                yield Container();
+              });
+              yield Builder(builder: (c) sync* {
+                buildCountChild2++;
+                c.select<int, int>(select2.call);
+                yield Container();
+              });
+            },
+          ));
     }
 
-    await tester.pumpWidget(build(0));
+    await tester.pumpComponent(build(0));
 
     expect(buildCountChild1, 1);
     expect(buildCountChild2, 1);
@@ -1288,7 +1137,7 @@ void main() {
     verify(select2(0)).called(1);
     verifyNoMoreInteractions(select2);
 
-    await tester.pumpWidget(build(1));
+    await tester.pumpComponent(build(1));
 
     expect(buildCountChild1, 2);
     expect(buildCountChild2, 2);
@@ -1297,7 +1146,7 @@ void main() {
     verify(select2(1)).called(2);
     verifyNoMoreInteractions(select2);
 
-    await tester.pumpWidget(build(2));
+    await tester.pumpComponent(build(2));
 
     expect(buildCountChild1, 3);
     expect(buildCountChild2, 3);
@@ -1308,7 +1157,7 @@ void main() {
   });
 }
 
-class StatefulTest extends StatefulWidget {
+class StatefulTest extends StatefulComponent {
   const StatefulTest({
     Key? key,
     this.initState,
@@ -1320,8 +1169,8 @@ class StatefulTest extends StatefulWidget {
 
   final void Function(BuildContext c)? initState;
   final void Function(BuildContext c)? didChangeDependencies;
-  final WidgetBuilder? builder;
-  final Widget? child;
+  final ComponentBuilder? builder;
+  final Component? child;
   final void Function(BuildContext c)? dispose;
 
   @override
@@ -1332,27 +1181,28 @@ class _StatefulTestState extends State<StatefulTest> {
   @override
   void initState() {
     super.initState();
-    widget.initState?.call(context);
+    component.initState?.call(context);
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    widget.didChangeDependencies?.call(context);
+    component.didChangeDependencies?.call(context);
   }
 
   @override
   void dispose() {
-    widget.dispose?.call(context);
+    component.dispose?.call(context);
     super.dispose();
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (widget.builder != null) {
-      return widget.builder!(context);
+  Iterable<Component> build(BuildContext context) sync* {
+    if (component.builder != null) {
+      yield* component.builder!(context);
+      return;
     }
-    return widget.child!;
+    yield component.child!;
   }
 }
 

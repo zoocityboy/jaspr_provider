@@ -1,9 +1,7 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
-import 'package:provider/src/provider.dart';
 
 import 'common.dart';
 
@@ -16,8 +14,14 @@ class Dispose extends Mock {
 }
 
 void main() {
-  testWidgets('works with MultiProvider', (tester) async {
-    await tester.pumpWidget(
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
+  test('works with MultiProvider', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider(
@@ -28,31 +32,31 @@ void main() {
       ),
     );
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
   });
 
-  testWidgets('calls create only once', (tester) async {
+  test('calls create only once', () async {
     final create = ValueBuilder();
 
-    await tester.pumpWidget(Provider<int?>(
+    await tester.pumpComponent(Provider<int?>(
       create: create,
       child: TextOf<int?>(),
     ));
 
-    await tester.pumpWidget(Provider<int?>(
+    await tester.pumpComponent(Provider<int?>(
       create: create,
       child: TextOf<int?>(),
     ));
 
-    await tester.pumpWidget(Container());
+    await tester.pumpComponent(Container());
 
     verify(create(any)).called(1);
   });
 
-  testWidgets('dispose', (tester) async {
+  test('dispose', () async {
     final dispose = Dispose();
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       Provider<int>(
         create: (_) => 42,
         dispose: dispose,
@@ -63,7 +67,7 @@ void main() {
     final context = findInheritedContext<int>();
 
     verifyZeroInteractions(dispose);
-    await tester.pumpWidget(Container());
+    await tester.pumpComponent(Container());
     verify(dispose(context, 42)).called(1);
   });
 }

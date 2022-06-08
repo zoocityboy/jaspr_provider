@@ -1,18 +1,9 @@
-// /!\ DO NOT MOVE THIS FILE /!\
-//
-// Flutter's devtool rely on the path to this file to be able to communicate with `provider`.
-
-import 'dart:developer' as developer;
-
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:nested/nested.dart';
+import 'package:jaspr/jaspr.dart';
 
-import 'reassemble_handler.dart';
+import 'single_child_stateless_component.dart';
 
 part 'deferred_inherited_provider.dart';
-part 'devtool.dart';
 part 'inherited_provider.dart';
 
 /// Whether the runtime has null safe sound mode enabled.
@@ -25,7 +16,7 @@ part 'inherited_provider.dart';
 /// checks are not done, and generics are not compared for null safety.
 final bool _isSoundMode = <int?>[] is! List<int>;
 
-/// A provider that merges multiple providers into a single linear widget tree.
+/// A provider that merges multiple providers into a single linear component tree.
 /// It is used to improve readability and reduce boilerplate code of having to
 /// nest multiple layers of providers.
 ///
@@ -38,7 +29,7 @@ final bool _isSoundMode = <int?>[] is! List<int>;
 ///     create: (_) => SomethingElse(),
 ///     child: Provider<AnotherThing>(
 ///       create: (_) => AnotherThing(),
-///       child: someWidget,
+///       child: someComponent,
 ///     ),
 ///   ),
 /// ),
@@ -53,13 +44,13 @@ final bool _isSoundMode = <int?>[] is! List<int>;
 ///     Provider<SomethingElse>(create: (_) => SomethingElse()),
 ///     Provider<AnotherThing>(create: (_) => AnotherThing()),
 ///   ],
-///   child: someWidget,
+///   child: someComponent,
 /// )
 /// ```
 ///
-/// The widget tree representation of the two approaches are identical.
+/// The component tree representation of the two approaches are identical.
 class MultiProvider extends Nested {
-  /// Build a tree of providers from a list of [SingleChildWidget].
+  /// Build a tree of providers from a list of [SingleChildComponent].
   ///
   /// The parameter `builder` is syntactic sugar for obtaining a [BuildContext] that can
   /// read the providers created.
@@ -104,7 +95,7 @@ class MultiProvider extends Nested {
   /// ```dart
   /// MultiProvider(
   ///   providers: [
-  ///     Provider<Something>(create: (_) => Something(), child: SomeWidget()),
+  ///     Provider<Something>(create: (_) => Something(), child: SomeComponent()),
   ///   ],
   ///   child: Text('Something'),
   /// )
@@ -119,13 +110,10 @@ class MultiProvider extends Nested {
   ///   child: Text('Something'),
   /// )
   /// ```
-  ///
-  /// For an explanation on the `child` parameter that `builder` receives,
-  /// see the "Performance optimizations" section of [AnimatedBuilder].
   MultiProvider({
     Key? key,
-    required List<SingleChildWidget> providers,
-    Widget? child,
+    required List<SingleChildComponent> providers,
+    Component? child,
     TransitionBuilder? builder,
   }) : super(
           key: key,
@@ -141,12 +129,12 @@ class MultiProvider extends Nested {
 /// A [Provider] that manages the lifecycle of the value it provides by
 /// delegating to a pair of [Create] and [Dispose].
 ///
-/// It is usually used to avoid making a [StatefulWidget] for something trivial,
+/// It is usually used to avoid making a [StatefulComponent] for something trivial,
 /// such as instantiating a BLoC.
 ///
 /// [Provider] is the equivalent of a [State.initState] combined with
 /// [State.dispose]. [Create] is called only once in [State.initState].
-/// We cannot use [InheritedWidget] as it requires the value to be
+/// We cannot use [InheritedComponent] as it requires the value to be
 /// constructor-initialized and final.
 ///
 /// The following example instantiates a `Model` once, and disposes it when
@@ -157,9 +145,9 @@ class MultiProvider extends Nested {
 ///   void dispose() {}
 /// }
 ///
-/// class Stateless extends StatelessWidget {
+/// class Stateless extends StatelessComponent {
 ///   @override
-///   Widget build(BuildContext context) {
+///   Iterable<Component> build(BuildContext context) sync* {
 ///     return Provider<Model>(
 ///       create: (context) =>  Model(),
 ///       dispose: (context, value) => value.dispose(),
@@ -171,24 +159,24 @@ class MultiProvider extends Nested {
 ///
 /// It is worth noting that the `create` callback is lazily called.
 /// It is called the first time the value is read, instead of the first time
-/// [Provider] is inserted in the widget tree.
+/// [Provider] is inserted in the component tree.
 ///
 /// This behavior can be disabled by passing `lazy: false` to [Provider].
 ///
 /// ## Testing
 ///
-/// When testing widgets that consumes providers, it is necessary to
-/// add the proper providers in the widget tree above the tested widget.
+/// When testing components that consumes providers, it is necessary to
+/// add the proper providers in the component tree above the tested component.
 ///
 /// A typical test may look like this:
 ///
 /// ```dart
 /// final foo = MockFoo();
 ///
-/// await tester.pumpWidget(
+/// await tester.pumpComponent(
 ///   Provider<Foo>.value(
 ///     value: foo,
-///     child: TestedWidget(),
+///     child: TestedComponent(),
 ///   ),
 /// );
 /// ```
@@ -204,24 +192,22 @@ class Provider<T> extends InheritedProvider<T> {
   ///
   /// The value can be optionally disposed using [dispose] callback.
   /// This callback which will be called when [Provider] is unmounted from the
-  /// widget tree.
+  /// component tree.
   Provider({
     Key? key,
     required Create<T> create,
     Dispose<T>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
           builder: builder,
           create: create,
           dispose: dispose,
-          debugCheckInvalidValueType: kReleaseMode
-              ? null
-              : (T value) =>
-                  Provider.debugCheckInvalidValueType?.call<T>(value),
+          debugCheckInvalidValueType:
+              kReleaseMode ? null : (T value) => Provider.debugCheckInvalidValueType?.call<T>(value),
           child: child,
         );
 
@@ -232,14 +218,14 @@ class Provider<T> extends InheritedProvider<T> {
   /// rebuilding dependents when [Provider] is rebuilt but `value` did not change.
   ///
   /// Defaults to `(previous, next) => previous != next`.
-  /// See [InheritedWidget.updateShouldNotify] for more information.
+  /// See [InheritedComponent.updateShouldNotify] for more information.
   /// {@endtemplate}
   Provider.value({
     Key? key,
     required T value,
     UpdateShouldNotify<T>? updateShouldNotify,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   })  : assert(() {
           Provider.debugCheckInvalidValueType?.call<T>(value);
           return true;
@@ -252,12 +238,12 @@ class Provider<T> extends InheritedProvider<T> {
           child: child,
         );
 
-  /// Obtains the nearest [Provider<T>] up its widget tree and returns its
+  /// Obtains the nearest [Provider<T>] up its component tree and returns its
   /// value.
   ///
   /// If [listen] is `true`, later value changes will trigger a new
-  /// [State.build] to widgets, and [State.didChangeDependencies] for
-  /// [StatefulWidget].
+  /// [State.build] to components, and [State.didChangeDependencies] for
+  /// [StatefulComponent].
   ///
   /// `listen: false` is necessary to be able to call `Provider.of` inside
   /// [State.initState] or the `create` method of providers like so:
@@ -270,26 +256,6 @@ class Provider<T> extends InheritedProvider<T> {
   /// )
   /// ```
   static T of<T>(BuildContext context, {bool listen = true}) {
-    assert(
-      context.owner!.debugBuilding ||
-          listen == false ||
-          debugIsInInheritedProviderUpdate,
-      '''
-Tried to listen to a value exposed with provider, from outside of the widget tree.
-
-This is likely caused by an event handler (like a button's onPressed) that called
-Provider.of without passing `listen: false`.
-
-To fix, write:
-Provider.of<$T>(context, listen: false);
-
-It is unsupported because may pointlessly rebuild the widget associated to the
-event handler, when the widget tree doesn't care about the value.
-
-The context used was: $context
-''',
-    );
-
     final inheritedElement = _inheritedElementOf<T>(context);
 
     if (listen) {
@@ -297,14 +263,14 @@ The context used was: $context
       // We have to use this method instead of dependOnInheritedElement, because
       // dependOnInheritedElement does not support relocating using GlobalKey
       // if no provider were found previously.
-      context.dependOnInheritedWidgetOfExactType<_InheritedProviderScope<T?>>();
+      context.dependOnInheritedComponentOfExactType<_InheritedProviderScope<T?>>();
     }
 
     final value = inheritedElement?.value;
 
     if (_isSoundMode) {
       if (value is! T) {
-        throw ProviderNullException(T, context.widget.runtimeType);
+        throw ProviderNullException(T, context.component.runtimeType);
       }
       return value;
     }
@@ -319,8 +285,8 @@ The context used was: $context
     assert(context != null, '''
 Tried to call context.read/watch/select or similar on a `context` that is null.
 
-This can happen if you used the context of a StatefulWidget and that
-StatefulWidget was disposed.
+This can happen if you used the context of a StatefulComponent and that
+StatefulComponent was disposed.
 ''');
     assert(
       _debugIsSelecting == false,
@@ -336,11 +302,11 @@ If you want to expose a variable that can be anything, consider changing
 `dynamic` to `Object` instead.
 ''',
     );
-    final inheritedElement = context.getElementForInheritedWidgetOfExactType<
-        _InheritedProviderScope<T?>>() as _InheritedProviderScopeElement<T?>?;
+    final inheritedElement = context.getElementForInheritedComponentOfExactType<_InheritedProviderScope<T?>>()
+        as _InheritedProviderScopeElement<T?>?;
 
     if (inheritedElement == null && null is! T) {
-      throw ProviderNotFoundException(T, context.widget.runtimeType);
+      throw ProviderNotFoundException(T, context.component.runtimeType);
     }
 
     return inheritedElement;
@@ -384,7 +350,7 @@ If you want to expose a variable that can be anything, consider changing
   static void Function<T>(T value)? debugCheckInvalidValueType = <T>(T value) {
     assert(() {
       if (value is Listenable || value is Stream) {
-        throw FlutterError('''
+        throw Exception('''
 Tried to use Provider with a subtype of Listenable/Stream ($T).
 
 This is likely a mistake, as Provider will not automatically update dependents
@@ -419,20 +385,21 @@ void main() {
 /// returned `null`.
 class ProviderNullException implements Exception {
   /// Create a ProviderNullException error with the type represented as a String.
-  ProviderNullException(this.valueType, this.widgetType);
+  ProviderNullException(this.valueType, this.componentType);
 
   /// The type of the value being retrieved
   final Type valueType;
 
-  /// The type of the Widget requesting the value
-  final Type widgetType;
+  /// The type of the Component requesting the value
+  final Type componentType;
+
   @override
   String toString() {
     if (kReleaseMode) {
       return 'A provider for $valueType unexpectedly returned null.';
     }
     return '''
-Error: The widget $widgetType tried to read Provider<$valueType> but the matching
+Error: The component $componentType tried to read Provider<$valueType> but the matching
 provider returned null.
 
 To fix the error, consider changing Provider<$valueType> to Provider<$valueType?>.
@@ -446,22 +413,22 @@ class ProviderNotFoundException implements Exception {
   /// Create a ProviderNotFound error with the type represented as a String.
   ProviderNotFoundException(
     this.valueType,
-    this.widgetType,
+    this.componentType,
   );
 
   /// The type of the value being retrieved
   final Type valueType;
 
-  /// The type of the Widget requesting the value
-  final Type widgetType;
+  /// The type of the Component requesting the value
+  final Type componentType;
 
   @override
   String toString() {
     if (kReleaseMode) {
-      return 'Provider<$valueType> not found for $widgetType';
+      return 'Provider<$valueType> not found for $componentType';
     }
     return '''
-Error: Could not find the correct Provider<$valueType> above this $widgetType Widget
+Error: Could not find the correct Provider<$valueType> above this $componentType Component
 
 This happens because you used a `BuildContext` that does not include the provider
 of your choice. There are a few common scenarios:
@@ -476,17 +443,17 @@ of your choice. There are a few common scenarios:
 
 - You used a `BuildContext` that is an ancestor of the provider you are trying to read.
 
-  Make sure that $widgetType is under your MultiProvider/Provider<$valueType>.
+  Make sure that $componentType is under your MultiProvider/Provider<$valueType>.
   This usually happens when you are creating a provider and trying to read it immediately.
 
   For example, instead of:
 
   ```
-  Widget build(BuildContext context) {
+  Iterable<Component> build(BuildContext context) sync* {
     return Provider<Example>(
       create: (_) => Example(),
       // Will throw a ProviderNotFoundError, because `context` is associated
-      // to the widget that is the parent of `Provider<Example>`
+      // to the component that is the parent of `Provider<Example>`
       child: Text(context.watch<Example>().toString()),
     );
   }
@@ -495,20 +462,20 @@ of your choice. There are a few common scenarios:
   consider using `builder` like so:
 
   ```
-  Widget build(BuildContext context) {
+  Iterable<Component> build(BuildContext context) sync* {
     return Provider<Example>(
       create: (_) => Example(),
       // we use `builder` to obtain a new `BuildContext` that has access to the provider
-      builder: (context, child) {
+      builder: (context, child) sync* {
         // No longer throws
-        return Text(context.watch<Example>().toString());
+        yield Text(context.watch<Example>().toString());
       }
     );
   }
   ```
 
 If none of these solutions work, consider asking for help on StackOverflow:
-https://stackoverflow.com/questions/tagged/flutter
+https://stackoverflow.com/questions/tagged/jaspr
 ''';
   }
 }
@@ -518,8 +485,8 @@ extension ReadContext on BuildContext {
   /// Obtain a value from the nearest ancestor provider of type [T].
   ///
   /// This method is the opposite of [watch].\
-  /// It will _not_ make widget rebuild when the value changes and cannot be
-  /// called inside [StatelessWidget.build]/[State.build].\
+  /// It will _not_ make component rebuild when the value changes and cannot be
+  /// called inside [StatelessComponent.build]/[State.build].\
   /// On the other hand, it can be freely called _outside_ of these methods.
   ///
   /// If that is incompatible with your criteria, consider using `Provider.of(context, listen: false)`.\
@@ -528,25 +495,25 @@ extension ReadContext on BuildContext {
   /// **DON'T** call [read] inside build if the value is used only for events:
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
+  /// Iterable<Component> build(BuildContext context) sync* {
   ///   // counter is used only for the onPressed of RaisedButton
   ///   final counter = context.read<Counter>();
   ///
-  ///   return RaisedButton(
+  ///   yield RaisedButton(
   ///     onPressed: () => counter.increment(),
   ///   );
   /// }
   /// ```
   ///
   /// While this code is not bugged in itself, this is an anti-pattern.
-  /// It could easily lead to bugs in the future after refactoring the widget
+  /// It could easily lead to bugs in the future after refactoring the component
   /// to use `counter` for other things, but forget to change [read] into [watch].
   ///
   /// **CONSIDER** calling [read] inside event handlers:
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
-  ///   return RaisedButton(
+  /// Iterable<Component> build(BuildContext context) sync* {
+  ///   yield RaisedButton(
   ///     onPressed: () {
   ///       // as performant as the previous solution, but resilient to refactoring
   ///       context.read<Counter>().increment(),
@@ -558,18 +525,18 @@ extension ReadContext on BuildContext {
   /// This has the same efficiency as the previous anti-pattern, but does not
   /// suffer from the drawback of being brittle.
   ///
-  /// **DON'T** use [read] for creating widgets with a value that never changes
+  /// **DON'T** use [read] for creating components with a value that never changes
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
+  /// Iterable<Component> build(BuildContext context) sync* {
   ///   // using read because we only use a value that never changes.
   ///   final model = context.read<Model>();
   ///
-  ///   return Text('${model.valueThatNeverChanges}');
+  ///   yield Text('${model.valueThatNeverChanges}');
   /// }
   /// ```
   ///
-  /// While the idea of not rebuilding the widget if something else changes is
+  /// While the idea of not rebuilding the component if something else changes is
   /// good, this should not be done with [read].
   /// Relying on [read] for optimisations is very brittle and dependent
   /// on an implementation detail.
@@ -577,11 +544,11 @@ extension ReadContext on BuildContext {
   /// **CONSIDER** using [select] for filtering unwanted rebuilds
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
+  /// Iterable<Component> build(BuildContext context) sync* {
   ///   // Using select to listen only to the value that used
   ///   final valueThatNeverChanges = context.select((Model model) => model.valueThatNeverChanges);
   ///
-  ///   return Text('$valueThatNeverChanges');
+  ///   yield Text('$valueThatNeverChanges');
   /// }
   /// ```
   ///
@@ -643,7 +610,7 @@ extension ReadContext on BuildContext {
   /// See also:
   ///
   /// - [WatchContext] and its `watch` method, similar to [read], but
-  ///   will make the widget tree rebuild when the obtained value changes.
+  ///   will make the component tree rebuild when the obtained value changes.
   /// - [Locator], a typedef to make it easier to pass [read] to objects.
   T read<T>() {
     return Provider.of<T>(this, listen: false);
@@ -660,15 +627,15 @@ extension WatchContext on BuildContext {
   /// If [T] is non-nullable and the provider obtained returned `null`, will
   /// throw [ProviderNullException].
   ///
-  /// This allows widgets to optionally depend on a provider:
+  /// This allows components to optionally depend on a provider:
   ///
   /// ```dart
   /// runApp(
-  ///   Builder(builder: (context) {
+  ///   Builder(builder: (context) sync* {
   ///     final value = context.watch<Movie?>();
   ///
   ///     if (value == null) Text('no Movie found');
-  ///     return Text(movie.title);
+  ///     yield Text(movie.title);
   ///   }),
   /// );
   /// ```
@@ -679,7 +646,7 @@ extension WatchContext on BuildContext {
   /// Provider.of<T>(context)
   /// ```
   ///
-  /// This method is accessible only inside [StatelessWidget.build] and
+  /// This method is accessible only inside [StatelessComponent.build] and
   /// [State.build].\
   /// If you need to use it outside of these methods, consider using [Provider.of]
   /// instead, which doesn't have this restriction.\
@@ -688,7 +655,7 @@ extension WatchContext on BuildContext {
   /// See also:
   ///
   /// - [ReadContext] and its `read` method, similar to [watch], but doesn't make
-  ///   widgets rebuild if the value obtained changes.
+  ///   components rebuild if the value obtained changes.
   T watch<T>() {
     return Provider.of<T>(this);
   }

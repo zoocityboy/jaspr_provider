@@ -1,12 +1,11 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_provider/src/value_listenable_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart' as mockito show when;
-// ignore: import_of_legacy_library_into_null_safe
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
-import 'package:provider/single_child_widget.dart';
+
+import 'common.dart';
 
 void mockImplementation<T extends Function>(dynamic Function() when, T mock) {
   mockito.when<dynamic>(when()).thenAnswer((invo) {
@@ -17,31 +16,36 @@ void mockImplementation<T extends Function>(dynamic Function() when, T mock) {
 void main() {
   final selector = MockSelector<int>(-1);
   final builder = MockBuilder<int>();
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
 
   tearDown(() {
     clearInteractions(builder);
     clearInteractions(selector);
   });
 
-  void mockBuilder(ValueWidgetBuilder<int> implementation) {
+  void mockBuilder(ValueComponentBuilder<int> implementation) {
     mockImplementation(() => builder(any, any, any), implementation);
   }
 
-  testWidgets('Deep compare maps by default', (tester) async {
+  test('Deep compare maps by default', () async {
     var value = <int, int>{};
     final builder = MockBuilder<Map<int, int>>();
-    when(builder(any, any, any)).thenReturn(Container());
+    when(builder(any, any, any)).thenReturn([Container()]);
 
     final selector = Selector0<Map<int, int>>(
       selector: (_) => value,
       builder: builder,
     );
-    await tester.pumpWidget(selector);
+    await tester.pumpComponent(selector);
 
     verify(builder(argThat(isNotNull), value, null)).called(1);
     verifyNoMoreInteractions(builder);
 
-    final element = tester.element(find.byWidget(selector));
+    final element = find.byComponent(selector).evaluate().first;
 
     value = {0: 0, 1: 1};
     element.markNeedsBuild();
@@ -57,21 +61,21 @@ void main() {
     verifyNoMoreInteractions(builder);
   });
 
-  testWidgets('Deep compare iterables by default', (tester) async {
+  test('Deep compare iterables by default', () async {
     var value = <int>[].whereType<int>();
     final builder = MockBuilder<Iterable<int>>();
-    when(builder(any, any, any)).thenReturn(Container());
+    when(builder(any, any, any)).thenReturn([Container()]);
 
     final selector = Selector0<Iterable<int>>(
       selector: (_) => value,
       builder: builder,
     );
-    await tester.pumpWidget(selector);
+    await tester.pumpComponent(selector);
 
     verify(builder(argThat(isNotNull), value, null)).called(1);
     verifyNoMoreInteractions(builder);
 
-    final element = tester.element(find.byWidget(selector));
+    final element = find.byComponent(selector).evaluate().first;
 
     value = [1, 2].whereType<int>();
     element.markNeedsBuild();
@@ -87,21 +91,21 @@ void main() {
     verifyNoMoreInteractions(builder);
   });
 
-  testWidgets('Deep compare sets by default', (tester) async {
+  test('Deep compare sets by default', () async {
     var value = <int>{};
     final builder = MockBuilder<Set<int>>();
-    when(builder(any, any, any)).thenReturn(Container());
+    when(builder(any, any, any)).thenReturn([Container()]);
 
     final selector = Selector0<Set<int>>(
       selector: (_) => value,
       builder: builder,
     );
-    await tester.pumpWidget(selector);
+    await tester.pumpComponent(selector);
 
     verify(builder(argThat(isNotNull), value, null)).called(1);
     verifyNoMoreInteractions(builder);
 
-    final element = tester.element(find.byWidget(selector));
+    final element = find.byComponent(selector).evaluate().first;
 
     value = {1, 2};
     element.markNeedsBuild();
@@ -117,21 +121,21 @@ void main() {
     verifyNoMoreInteractions(builder);
   });
 
-  testWidgets('Deep compare lists by default', (tester) async {
+  test('Deep compare lists by default', () async {
     var value = <int>[];
     final builder = MockBuilder<List<int>>();
-    when(builder(any, any, any)).thenReturn(Container());
+    when(builder(any, any, any)).thenReturn([Container()]);
 
     final selector = Selector0<List<int>>(
       selector: (_) => value,
       builder: builder,
     );
-    await tester.pumpWidget(selector);
+    await tester.pumpComponent(selector);
 
     verify(builder(argThat(isNotNull), value, null)).called(1);
     verifyNoMoreInteractions(builder);
 
-    final element = tester.element(find.byWidget(selector));
+    final element = find.byComponent(selector).evaluate().first;
 
     value = [1, 2];
     element.markNeedsBuild();
@@ -147,27 +151,27 @@ void main() {
     verifyNoMoreInteractions(builder);
   });
 
-  testWidgets('custom shouldRebuid', (tester) async {
+  test('custom shouldRebuid', () async {
     var value = 0;
     var shouldRebuild = true;
     final mockShouldRebuild = MockShouldRebuild<int>();
     when(mockShouldRebuild(any, any)).thenAnswer((_) => shouldRebuild);
 
     final builder = MockBuilder<int>();
-    when(builder(any, any, any)).thenReturn(Container());
+    when(builder(any, any, any)).thenReturn([Container()]);
 
     final selector = Selector0<int>(
       selector: (_) => value,
       shouldRebuild: mockShouldRebuild,
       builder: builder,
     );
-    await tester.pumpWidget(selector);
+    await tester.pumpComponent(selector);
 
     verifyZeroInteractions(mockShouldRebuild);
     verify(builder(argThat(isNotNull), 0, null)).called(1);
     verifyNoMoreInteractions(builder);
 
-    final element = tester.element(find.byWidget(selector));
+    final element = find.byComponent(selector).evaluate().first;
 
     value = 1;
     element.markNeedsBuild();
@@ -188,51 +192,55 @@ void main() {
     verifyNoMoreInteractions(builder);
   });
 
-  testWidgets('passes `child` and `key`', (tester) async {
-    final key = GlobalKey();
-    await tester.pumpWidget(
+  test('passes `child` and `key`', () async {
+    const key = GlobalKey();
+    await tester.pumpComponent(
       Selector0<void>(
         key: key,
         selector: (_) {},
-        builder: (_, __, child) => child!,
-        child: const Text('42', textDirection: TextDirection.ltr),
+        builder: (_, __, child) sync* {
+          yield child!;
+        },
+        child: const Text('42'),
       ),
     );
 
     expect(key.currentContext, isNotNull);
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
   });
 
-  testWidgets('calls builder if the callback changes', (tester) async {
-    await tester.pumpWidget(
+  test('calls builder if the callback changes', () async {
+    await tester.pumpComponent(
       Selector0<int>(
         selector: (_) => 42,
-        builder: (_, __, ___) =>
-            const Text('foo', textDirection: TextDirection.ltr),
+        builder: (_, __, ___) sync* {
+          yield const Text('foo');
+        },
       ),
     );
 
-    expect(find.text('foo'), findsOneWidget);
+    expect(find.text('foo'), findsOneComponent);
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       Selector0<int>(
         selector: (_) => 42,
-        builder: (_, __, ___) =>
-            const Text('bar', textDirection: TextDirection.ltr),
+        builder: (_, __, ___) sync* {
+          yield const Text('bar');
+        },
       ),
     );
 
-    expect(find.text('bar'), findsOneWidget);
+    expect(find.text('bar'), findsOneComponent);
   });
 
-  testWidgets('works with MultiProvider', (tester) async {
-    final key = GlobalKey();
+  test('works with MultiProvider', () async {
+    const key = GlobalKey();
     int selector(BuildContext _) => 42;
-    Widget builder(BuildContext _, int __, Widget? child) => child!;
-    const child = Text('foo', textDirection: TextDirection.ltr);
+    Iterable<Component> builder(BuildContext _, int __, Component? child) => [child!];
+    const child = Text('foo');
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Selector0<int>(
@@ -245,11 +253,9 @@ void main() {
       ),
     );
 
-    final widget = tester.widget(
-      find.byWidgetPredicate((w) => w is Selector0<int>),
-    ) as Selector0<int>;
+    final widget = find.byComponentPredicate((w) => w is Selector0<int>).evaluate().first.component as Selector0<int>;
 
-    expect(find.text('foo'), findsOneWidget);
+    expect(find.text('foo'), findsOneComponent);
     expect(widget.key, key);
     expect(
       widget.selector,
@@ -261,16 +267,16 @@ void main() {
     );
   });
 
-  testWidgets(
+  test(
       "don't call builder again if it rebuilds "
-      'but selector returns the same thing', (tester) async {
+      'but selector returns the same thing', () async {
     when(selector(any)).thenReturn(42);
 
-    mockBuilder((_, value, ___) {
-      return Text(value.toString(), textDirection: TextDirection.ltr);
+    mockBuilder((_, value, ___) sync* {
+      yield Text(value.toString());
     });
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       Selector0<int>(
         selector: selector,
         builder: builder,
@@ -283,30 +289,28 @@ void main() {
     verify(builder(argThat(isNotNull), 42, null)).called(1);
     verifyNoMoreInteractions(selector);
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
 
-    tester
-        .element(find.byWidgetPredicate((w) => w is Selector0))
-        .markNeedsBuild();
+    find.byComponentPredicate((w) => w is Selector0).evaluate().first.markNeedsBuild();
 
     await tester.pump();
 
     verify(selector(argThat(isNotNull))).called(1);
     verifyNoMoreInteractions(builder);
     verifyNoMoreInteractions(selector);
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
   });
 
-  testWidgets(
+  test(
       'call builder again if it rebuilds '
-      'abd selector returns the a different variable', (tester) async {
+      'abd selector returns the a different variable', () async {
     when(selector(any)).thenReturn(42);
 
-    mockBuilder((_, value, ___) {
-      return Text(value.toString(), textDirection: TextDirection.ltr);
+    mockBuilder((_, value, ___) sync* {
+      yield Text(value.toString());
     });
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       Selector0<int>(
         selector: selector,
         builder: builder,
@@ -319,11 +323,9 @@ void main() {
     verify(builder(argThat(isNotNull), 42, null)).called(1);
     verifyNoMoreInteractions(selector);
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
 
-    tester
-        .element(find.byWidgetPredicate((w) => w is Selector0))
-        .markNeedsBuild();
+    find.byComponentPredicate((w) => w is Selector0).evaluate().first.markNeedsBuild();
 
     when(selector(any)).thenReturn(24);
 
@@ -333,51 +335,27 @@ void main() {
     verify(builder(argThat(isNotNull), 24, null)).called(1);
     verifyNoMoreInteractions(selector);
     verifyNoMoreInteractions(builder);
-    expect(find.text('24'), findsOneWidget);
+    expect(find.text('24'), findsOneComponent);
   });
 
-  testWidgets('debugFillProperties', (tester) async {
-    final builder = DiagnosticPropertiesBuilder();
-    final key = UniqueKey();
-    final selector = Selector0<int>(
-      key: key,
-      selector: (_) => 0,
-      builder: (_, __, ___) => const SizedBox(),
-    );
-
-    await tester.pumpWidget(selector);
-
-    final element = tester.element(find.byKey(key)) as StatefulElement;
-    final selectorState = element.state as SingleChildState<Selector0<int>>;
-    selectorState.debugFillProperties(builder);
-    final description = builder.properties
-        .where(
-          (DiagnosticsNode node) => !node.isFiltered(DiagnosticLevel.info),
-        )
-        .map((DiagnosticsNode node) => node.toString())
-        .toList();
-    expect(description, <String>['value: 0']);
-  });
-
-  testWidgets('Selector', (tester) async {
-    await tester.pumpWidget(
+  test('Selector', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
         ],
         child: Selector<A, String>(
           selector: (_, a) => '$a',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A'), findsOneWidget);
+    expect(find.text('A'), findsOneComponent);
   });
 
-  testWidgets('Selector2', (tester) async {
-    await tester.pumpWidget(
+  test('Selector2', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
@@ -385,17 +363,16 @@ void main() {
         ],
         child: Selector2<A, B, String>(
           selector: (_, a, b) => '$a $b',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A B'), findsOneWidget);
+    expect(find.text('A B'), findsOneComponent);
   });
 
-  testWidgets('Selector3', (tester) async {
-    await tester.pumpWidget(
+  test('Selector3', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
@@ -404,17 +381,16 @@ void main() {
         ],
         child: Selector3<A, B, C, String>(
           selector: (_, a, b, c) => '$a $b $c',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A B C'), findsOneWidget);
+    expect(find.text('A B C'), findsOneComponent);
   });
 
-  testWidgets('Selector4', (tester) async {
-    await tester.pumpWidget(
+  test('Selector4', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
@@ -424,17 +400,16 @@ void main() {
         ],
         child: Selector4<A, B, C, D, String>(
           selector: (_, a, b, c, d) => '$a $b $c $d',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A B C D'), findsOneWidget);
+    expect(find.text('A B C D'), findsOneComponent);
   });
 
-  testWidgets('Selector5', (tester) async {
-    await tester.pumpWidget(
+  test('Selector5', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
@@ -445,17 +420,16 @@ void main() {
         ],
         child: Selector5<A, B, C, D, E, String>(
           selector: (_, a, b, c, d, e) => '$a $b $c $d $e',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A B C D E'), findsOneWidget);
+    expect(find.text('A B C D E'), findsOneComponent);
   });
 
-  testWidgets('Selector6', (tester) async {
-    await tester.pumpWidget(
+  test('Selector6', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: A()),
@@ -467,13 +441,12 @@ void main() {
         ],
         child: Selector6<A, B, C, D, E, F, String>(
           selector: (_, a, b, c, d, e, f) => '$a $b $c $d $e $f',
-          builder: (_, value, __) =>
-              Text(value, textDirection: TextDirection.ltr),
+          builder: (_, value, __) => [Text(value)],
         ),
       ),
     );
 
-    expect(find.text('A B C D E F'), findsOneWidget);
+    expect(find.text('A B C D E F'), findsOneComponent);
   });
 }
 
@@ -519,10 +492,10 @@ class MockShouldRebuild<T> extends Mock {
 }
 
 class MockBuilder<T> extends Mock {
-  Widget call(BuildContext? context, T? value, Widget? child) {
+  Iterable<Component> call(BuildContext? context, T? value, Component? child) {
     return super.noSuchMethod(
       Invocation.method(#call, [context, value, child]),
       returnValue: Container(),
-    ) as Widget;
+    ) as Iterable<Component>;
   }
 }

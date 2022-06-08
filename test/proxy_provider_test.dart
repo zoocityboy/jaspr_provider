@@ -1,17 +1,19 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'dart:async';
+
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/provider.dart';
 
 import 'common.dart';
 
-Finder findProvider<T>() => find.byWidgetPredicate(
+Finder findProvider<T>() => find.byComponentPredicate(
     // comparing `runtimeType` instead of using `is` because `is` accepts
     // subclasses but InheritedWidgets don't.
     (widget) => widget.runtimeType == typeOf<InheritedProvider<T>>());
 
 void main() {
+  late ComponentTester tester;
   final a = A();
   final b = B();
   final c = C();
@@ -20,7 +22,12 @@ void main() {
   final f = F();
 
   final combinedConsumerMock = MockCombinedBuilder();
-  setUp(() => when(combinedConsumerMock(any)).thenReturn(Container()));
+  setUp(() => when(combinedConsumerMock(any)).thenReturn([Container()]));
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
   tearDown(() {
     clearInteractions(combinedConsumerMock);
   });
@@ -29,8 +36,7 @@ void main() {
     builder: (context, combined, child) => combinedConsumerMock(combined),
   );
 
-  InheritedContext<Combined?> findProxyProvider() =>
-      findInheritedContext<Combined>();
+  InheritedContext<Combined?> findProxyProvider() => findInheritedContext<Combined>();
 
   group('ProxyProvider', () {
     final combiner = CombinerMock();
@@ -45,43 +51,54 @@ void main() {
     });
     tearDown(() => clearInteractions(combiner));
 
-    testWidgets('throws if the provided value is a Listenable/Stream',
-        (tester) async {
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            Provider.value(value: a),
-            ProxyProvider<A, MyListenable>(
-              update: (_, __, ___) => MyListenable(),
-            )
-          ],
-          child: TextOf<MyListenable>(),
-        ),
+    test('throws if the provided value is a Listenable/Stream', () async {
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            MultiProvider(
+              providers: [
+                Provider.value(value: a),
+                ProxyProvider<A, MyListenable>(
+                  update: (_, __, ___) => MyListenable(),
+                )
+              ],
+              child: TextOf<MyListenable>(),
+            ),
+          );
+          expect(false, isTrue);
+        },
+        (error, stack) {
+          expect(true, isTrue);
+        },
       );
 
-      expect(tester.takeException(), isFlutterError);
-
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            Provider.value(value: a),
-            ProxyProvider<A, MyStream>(
-              update: (_, __, ___) => MyStream(),
-            )
-          ],
-          child: TextOf<MyStream>(),
-        ),
+      await runZonedGuarded(
+        () async {
+          await tester.pumpComponent(
+            MultiProvider(
+              providers: [
+                Provider.value(value: a),
+                ProxyProvider<A, MyStream>(
+                  update: (_, __, ___) => MyStream(),
+                )
+              ],
+              child: TextOf<MyStream>(),
+            ),
+          );
+          expect(false, isTrue);
+        },
+        (error, stack) {
+          expect(true, isTrue);
+        },
       );
-
-      expect(tester.takeException(), isFlutterError);
     });
 
-    testWidgets('debugCheckInvalidValueType can be disabled', (tester) async {
+    test('debugCheckInvalidValueType can be disabled', () async {
       final previous = Provider.debugCheckInvalidValueType;
       Provider.debugCheckInvalidValueType = null;
       addTearDown(() => Provider.debugCheckInvalidValueType = previous);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -93,7 +110,7 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -106,12 +123,12 @@ void main() {
       );
     });
 
-    testWidgets('create creates initial value', (tester) async {
+    test('create creates initial value', () async {
       final create = InitialValueBuilderMock<Combined>(const Combined());
 
       when(create(any)).thenReturn(const Combined());
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -129,8 +146,8 @@ void main() {
       verify(combiner(argThat(isNotNull), a, const Combined()));
     });
 
-    testWidgets('consume another providers', (tester) async {
-      await tester.pumpWidget(
+    test('consume another providers', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -151,8 +168,8 @@ void main() {
       verifyNoMoreInteractions(combiner);
     });
 
-    testWidgets('rebuild descendants if value change', (tester) async {
-      await tester.pumpWidget(
+    test('rebuild descendants if value change', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -166,7 +183,7 @@ void main() {
 
       final a2 = A();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a2),
@@ -190,12 +207,11 @@ void main() {
       verifyNoMoreInteractions(combinedConsumerMock);
     });
 
-    testWidgets('call dispose when unmounted with the latest result',
-        (tester) async {
+    test('call dispose when unmounted with the latest result', () async {
       final dispose = DisposeMock<Combined>();
       final dispose2 = DisposeMock<Combined>();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -208,7 +224,7 @@ void main() {
       final a2 = A();
 
       // ProxyProvider creates a new Combined instance
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a2),
@@ -223,7 +239,7 @@ void main() {
         dispose(context, Combined(context, null, a)),
       );
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       verify(
         dispose2(context, Combined(context, Combined(context, null, a), a2)),
@@ -231,9 +247,8 @@ void main() {
       verifyNoMoreInteractions(dispose);
     });
 
-    testWidgets("don't rebuild descendants if value doesn't change",
-        (tester) async {
-      await tester.pumpWidget(
+    test("don't rebuild descendants if value doesn't change", () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -245,7 +260,7 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(
@@ -274,25 +289,23 @@ void main() {
       verifyNoMoreInteractions(combinedConsumerMock);
     });
 
-    testWidgets('pass down updateShouldNotify', (tester) async {
+    test('pass down updateShouldNotify', () async {
       var buildCount = 0;
-      final child = Builder(builder: (context) {
+      final child = Builder(builder: (context) sync* {
         buildCount++;
 
-        return Text(
+        yield Text(
           '$buildCount ${Provider.of<String>(context)}',
-          textDirection: TextDirection.ltr,
         );
       });
 
       final shouldNotify = UpdateShouldNotifyMock<String>();
       when(shouldNotify('Hello', 'Hello')).thenReturn(false);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
-            Provider<String>.value(
-                value: 'Hello', updateShouldNotify: (_, __) => true),
+            Provider<String>.value(value: 'Hello', updateShouldNotify: (_, __) => true),
             ProxyProvider<String, String>(
               update: (_, value, __) => value,
               updateShouldNotify: shouldNotify,
@@ -302,11 +315,10 @@ void main() {
         ),
       );
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
-            Provider<String>.value(
-                value: 'Hello', updateShouldNotify: (_, __) => true),
+            Provider<String>.value(value: 'Hello', updateShouldNotify: (_, __) => true),
             ProxyProvider<String, String>(
               update: (_, value, __) => value,
               updateShouldNotify: shouldNotify,
@@ -320,13 +332,13 @@ void main() {
       verifyNoMoreInteractions(shouldNotify);
 
       expect(find.text('2 Hello'), findsNothing);
-      expect(find.text('1 Hello'), findsOneWidget);
+      expect(find.text('1 Hello'), findsOneComponent);
     });
 
-    testWidgets('works with MultiProvider', (tester) async {
-      final key = GlobalKey();
+    test('works with MultiProvider', () async {
+      const key = GlobalKey();
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -345,22 +357,20 @@ void main() {
 
     // useful for libraries such as Mobx where events are synchronously
     // dispatched
-    testWidgets(
-        'update callback can trigger descendants setState synchronously',
-        (tester) async {
+    test('update callback can trigger descendants setState synchronously', () async {
       var statefulBuildCount = 0;
       void Function(VoidCallback)? setState;
 
-      final statefulBuilder = StatefulBuilder(builder: (context, s) {
+      final statefulBuilder = StatefulBuilder(builder: (context, s) sync* {
         // force update to be called
         Provider.of<Combined>(context, listen: false);
 
         setState = s;
         statefulBuildCount++;
-        return Container();
+        yield Container();
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -376,7 +386,7 @@ void main() {
         reason: 'update must not be called asynchronously',
       );
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: A()),
@@ -398,8 +408,8 @@ void main() {
   });
 
   group('ProxyProvider variants', () {
-    testWidgets('ProxyProvider2', (tester) async {
-      await tester.pumpWidget(
+    test('ProxyProvider2', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -410,8 +420,7 @@ void main() {
             Provider.value(value: f),
             ProxyProvider2<A, B, Combined>(
               create: (_) => const Combined(),
-              update: (context, a, b, previous) =>
-                  Combined(context, previous, a, b),
+              update: (context, a, b, previous) => Combined(context, previous, a, b),
             )
           ],
           child: mockConsumer,
@@ -427,8 +436,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ProxyProvider3', (tester) async {
-      await tester.pumpWidget(
+    test('ProxyProvider3', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -439,8 +448,7 @@ void main() {
             Provider.value(value: f),
             ProxyProvider3<A, B, C, Combined>(
               create: (_) => const Combined(),
-              update: (context, a, b, c, previous) =>
-                  Combined(context, previous, a, b, c),
+              update: (context, a, b, c, previous) => Combined(context, previous, a, b, c),
             )
           ],
           child: mockConsumer,
@@ -456,8 +464,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ProxyProvider4', (tester) async {
-      await tester.pumpWidget(
+    test('ProxyProvider4', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -468,8 +476,7 @@ void main() {
             Provider.value(value: f),
             ProxyProvider4<A, B, C, D, Combined>(
               create: (_) => const Combined(),
-              update: (context, a, b, c, d, previous) =>
-                  Combined(context, previous, a, b, c, d),
+              update: (context, a, b, c, d, previous) => Combined(context, previous, a, b, c, d),
             )
           ],
           child: mockConsumer,
@@ -485,8 +492,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ProxyProvider5', (tester) async {
-      await tester.pumpWidget(
+    test('ProxyProvider5', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -497,8 +504,7 @@ void main() {
             Provider.value(value: f),
             ProxyProvider5<A, B, C, D, E, Combined>(
               create: (_) => const Combined(),
-              update: (context, a, b, c, d, e, previous) =>
-                  Combined(context, previous, a, b, c, d, e),
+              update: (context, a, b, c, d, e, previous) => Combined(context, previous, a, b, c, d, e),
             )
           ],
           child: mockConsumer,
@@ -514,8 +520,8 @@ void main() {
       ).called(1);
     });
 
-    testWidgets('ProxyProvider6', (tester) async {
-      await tester.pumpWidget(
+    test('ProxyProvider6', () async {
+      await tester.pumpComponent(
         MultiProvider(
           providers: [
             Provider.value(value: a),
@@ -526,8 +532,7 @@ void main() {
             Provider.value(value: f),
             ProxyProvider6<A, B, C, D, E, F, Combined>(
               create: (_) => const Combined(),
-              update: (context, a, b, c, d, e, f, previous) =>
-                  Combined(context, previous, a, b, c, d, e, f),
+              update: (context, a, b, c, d, e, f, previous) => Combined(context, previous, a, b, c, d, e, f),
             )
           ],
           child: mockConsumer,

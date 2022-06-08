@@ -1,13 +1,13 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+
+import 'package:jaspr/jaspr.dart';
 
 import 'provider.dart';
 
 // ignore: public_member_api_docs
-typedef ProviderBuilder<R> = Widget Function(
+typedef ProviderBuilder<R> = Component Function(
   BuildContext context,
   R value,
-  Widget child,
+  Component child,
 );
 
 // ignore: public_member_api_docs
@@ -78,7 +78,7 @@ class ProxyProvider0<R> extends InheritedProvider<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -151,7 +151,7 @@ class ProxyProvider<T, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -179,7 +179,7 @@ class ProxyProvider2<T, T2, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -208,7 +208,7 @@ class ProxyProvider3<T, T2, T3, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -238,7 +238,7 @@ class ProxyProvider4<T, T2, T3, T4, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -269,7 +269,7 @@ class ProxyProvider5<T, T2, T3, T4, T5, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
@@ -301,7 +301,7 @@ class ProxyProvider6<T, T2, T3, T4, T5, T6, R> extends ProxyProvider0<R> {
     Dispose<R>? dispose,
     bool? lazy,
     TransitionBuilder? builder,
-    Widget? child,
+    Component? child,
   }) : super(
           key: key,
           lazy: lazy,
