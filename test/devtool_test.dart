@@ -1,12 +1,18 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/jaspr_provider.dart';
-import 'package:provider/src/provider.dart';
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_provider/src/provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 
+import 'common.dart';
 import 'matchers.dart';
 
 void main() {
   late PostEventSpy spy;
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
 
   setUp(() {
     spy = spyPostEvent();
@@ -14,24 +20,23 @@ void main() {
 
   tearDown(() => spy.dispose());
 
-  testWidgets('calls postEvent whenever a provider is updated', (tester) async {
+  test('calls postEvent whenever a provider is updated', () async {
     final notifier = ValueNotifier(42);
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           ChangeNotifierProvider.value(value: notifier),
         ],
         child: Consumer<ValueNotifier<int>>(
-          builder: (context, value, child) {
-            return Container();
+          builder: (context, value, child) sync* {
+            yield Container();
           },
         ),
       ),
     );
 
-    final notifierId =
-        ProviderBinding.debugInstance.providerDetails.keys.single;
+    final notifierId = ProviderBinding.debugInstance.providerDetails.keys.single;
 
     spy.logs.clear();
 
@@ -53,14 +58,13 @@ void main() {
     spy.logs.clear();
   });
 
-  testWidgets('calls postEvent whenever a provider is mounted/unmounted',
-      (tester) async {
+  test('calls postEvent whenever a provider is mounted/unmounted', () async {
     Provider.value(value: 42);
 
     expect(spy.logs, isEmpty);
     expect(ProviderBinding.debugInstance.providerDetails, isEmpty);
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: 42),
@@ -69,8 +73,7 @@ void main() {
       ),
     );
 
-    final intProviderId =
-        ProviderBinding.debugInstance.providerDetails.keys.first;
+    final intProviderId = ProviderBinding.debugInstance.providerDetails.keys.first;
 
     expect(ProviderBinding.debugInstance.providerDetails, {
       intProviderId: isA<ProviderNode>()
@@ -84,7 +87,7 @@ void main() {
     );
     spy.logs.clear();
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: 42),
@@ -94,8 +97,7 @@ void main() {
       ),
     );
 
-    final stringProviderId =
-        ProviderBinding.debugInstance.providerDetails.keys.last;
+    final stringProviderId = ProviderBinding.debugInstance.providerDetails.keys.last;
 
     expect(intProviderId, isNot(stringProviderId));
     expect(ProviderBinding.debugInstance.providerDetails, {
@@ -114,7 +116,7 @@ void main() {
     );
     spy.logs.clear();
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           Provider.value(value: 42),

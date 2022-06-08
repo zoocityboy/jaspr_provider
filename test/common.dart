@@ -1,33 +1,25 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
+import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_provider/jaspr_provider.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
 
-Element findElementOfWidget<T extends Widget>() {
+Element findElementOfComponent<T extends Component>() {
   return find.byType(T).first.evaluate().first;
 }
 
 final bool isSoundMode = <int?>[] is! List<int>;
 
 InheritedContext<T?> findInheritedContext<T>() {
-  return find
-      .byElementPredicate((e) => e is InheritedContext<T?>)
-      .first
-      .evaluate()
-      .first as InheritedContext<T?>;
+  return find.byElementPredicate((e) => e is InheritedContext<T?>).first.evaluate().first as InheritedContext<T?>;
 }
-
-Type typeOf<T>() => T;
 
 /// Given `T`, returns a `Provider<T?>`.
 ///
 /// For use in legacy tests: they can't instantiate a `Provider<T?>` directly
 /// because they can't write `<T?>`. But, they can pass around a `Provider<T?`>.
-Provider<T?> nullableProviderOfValue<T>(T value, Provider? child) =>
-    Provider<T?>.value(
+Provider<T?> nullableProviderOfValue<T>(T value, Provider? child) => Provider<T?>.value(
       value: value,
       child: child,
     );
@@ -35,8 +27,7 @@ Provider<T?> nullableProviderOfValue<T>(T value, Provider? child) =>
 /// Given `T`, returns a `Provider<T>`.
 ///
 /// For legacy tests to get a `Provider<T>`.
-Provider<T> nullSafeProviderOfValue<T>(T value, Provider? child) =>
-    Provider<T>.value(
+Provider<T> nullSafeProviderOfValue<T>(T value, Provider? child) => Provider<T>.value(
       value: value,
       child: child,
     );
@@ -74,21 +65,21 @@ class ValueBuilderMock<T> extends Mock {
 }
 
 class TransitionBuilderMock extends Mock {
-  TransitionBuilderMock([Widget Function(BuildContext c, Widget child)? cb]) {
+  TransitionBuilderMock([Iterable<Component> Function(BuildContext c, Component child)? cb]) {
     if (cb != null) {
       when(this(any, any)).thenAnswer((i) {
         final context = i.positionalArguments.first as BuildContext;
-        final child = i.positionalArguments[1] as Widget;
+        final child = i.positionalArguments[1] as Component;
         return cb(context, child);
       });
     }
   }
 
-  Widget call(BuildContext? context, Widget? child) {
-    return super.noSuchMethod(
+  Iterable<Component> call(BuildContext? context, Component? child) sync* {
+    yield super.noSuchMethod(
       Invocation.method(#call, [context, child]),
       returnValue: Container(),
-    ) as Widget;
+    ) as Component;
   }
 }
 
@@ -132,31 +123,31 @@ class MockNotifier extends Mock implements ChangeNotifier {
       ) as bool;
 }
 
-class ValueWidgetBuilderMock<T> extends Mock {
-  ValueWidgetBuilderMock([
-    Widget Function(BuildContext c, T value, Widget child)? cb,
+class ValueComponentBuilderMock<T> extends Mock {
+  ValueComponentBuilderMock([
+    Iterable<Component> Function(BuildContext c, T value, Component child)? cb,
   ]) {
     if (cb != null) {
       when(this(any, any, any)).thenAnswer((i) {
         final context = i.positionalArguments.first as BuildContext;
         final value = i.positionalArguments[1] as T;
-        final child = i.positionalArguments[2] as Widget;
+        final child = i.positionalArguments[2] as Component;
         return cb(context, value, child);
       });
     }
   }
 
-  Widget call(BuildContext? context, T? value, Widget? child) {
-    return super.noSuchMethod(
+  Iterable<Component> call(BuildContext? context, T? value, Component? child) sync* {
+    yield super.noSuchMethod(
       Invocation.method(#call, [context, value, child]),
       returnValue: Container(),
       returnValueForMissingStub: Container(),
-    ) as Widget;
+    ) as Component;
   }
 }
 
 class BuilderMock extends Mock {
-  BuilderMock([Widget Function(BuildContext c)? cb]) {
+  BuilderMock([Component Function(BuildContext c)? cb]) {
     if (cb != null) {
       when(this(any)).thenAnswer((i) {
         final context = i.positionalArguments.first as BuildContext;
@@ -165,12 +156,12 @@ class BuilderMock extends Mock {
     }
   }
 
-  Widget call(BuildContext? context) {
+  Component call(BuildContext? context) {
     return super.noSuchMethod(
       Invocation.method(#call, [context]),
       returnValue: Container(),
       returnValueForMissingStub: Container(),
-    ) as Widget;
+    ) as Component;
   }
 }
 
@@ -210,12 +201,12 @@ class StreamSubscriptionMock<T> extends Mock implements StreamSubscription<T> {
 }
 
 class MockConsumerBuilder<T> extends Mock {
-  Widget call(BuildContext? context, T? value, Widget? child) {
-    return super.noSuchMethod(
+  Iterable<Component> call(BuildContext? context, T? value, Component? child) sync* {
+    yield super.noSuchMethod(
       Invocation.method(#call, [context, value, child]),
       returnValue: Container(),
       returnValueForMissingStub: Container(),
-    ) as Widget;
+    ) as Component;
   }
 }
 
@@ -229,15 +220,12 @@ class UpdateShouldNotifyMock<T> extends Mock {
   }
 }
 
-class TextOf<T> extends StatelessWidget {
+class TextOf<T> extends StatelessComponent {
   TextOf({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
-    return Text(
-      Provider.of<T>(context).toString(),
-      textDirection: TextDirection.ltr,
-    );
+  Iterable<Component> build(BuildContext context) sync* {
+    yield Text(Provider.of<T>(context).toString());
   }
 }
 
@@ -282,25 +270,25 @@ class DebugCheckValueTypeMock<T> extends Mock {
   void call(T value);
 }
 
-class A with DiagnosticableTreeMixin {}
+class A {}
 
-class B with DiagnosticableTreeMixin {}
+class B {}
 
-class C with DiagnosticableTreeMixin {}
+class C {}
 
-class D with DiagnosticableTreeMixin {}
+class D {}
 
-class E with DiagnosticableTreeMixin {}
+class E {}
 
-class F with DiagnosticableTreeMixin {}
+class F {}
 
 class MockCombinedBuilder extends Mock {
-  Widget call(Combined? foo) {
-    return super.noSuchMethod(
+  Iterable<Component> call(Combined? foo) sync* {
+    yield super.noSuchMethod(
       Invocation.method(#call, [foo]),
       returnValue: Container(),
       returnValueForMissingStub: Container(),
-    ) as Widget;
+    ) as Component;
   }
 }
 
@@ -315,13 +303,13 @@ class CombinerMock extends Mock {
 }
 
 class ProviderBuilderMock extends Mock {
-  Widget call(BuildContext context, Combined value, Widget child);
+  Component call(BuildContext context, Combined value, Component child);
 }
 
 class MyStream extends Fake implements Stream<int> {}
 
 @immutable
-class Combined extends DiagnosticableTree {
+class Combined {
   const Combined([
     this.context,
     this.previous,
@@ -353,36 +341,18 @@ class Combined extends DiagnosticableTree {
       other.c == c &&
       other.e == e &&
       other.f == f;
-
-  // fancy toString for debug purposes.
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.properties.addAll([
-      DiagnosticsProperty('a', a, defaultValue: null),
-      DiagnosticsProperty('b', b, defaultValue: null),
-      DiagnosticsProperty('c', c, defaultValue: null),
-      DiagnosticsProperty('d', d, defaultValue: null),
-      DiagnosticsProperty('e', e, defaultValue: null),
-      DiagnosticsProperty('f', f, defaultValue: null),
-      DiagnosticsProperty('previous', previous, defaultValue: null),
-      DiagnosticsProperty('context', context, defaultValue: null),
-    ]);
-  }
 }
 
 class MyListenable extends ChangeNotifier {}
 
-int buildCountOf(BuildCount widget) {
-  return ((find.byWidget(widget).evaluate().single as StatefulElement).state
-          as _BuildCountState)
-      .buildCount;
+int buildCountOf(BuildCount component) {
+  return ((find.byComponent(component).evaluate().single as StatefulElement).state as _BuildCountState).buildCount;
 }
 
-class BuildCount extends StatefulWidget {
+class BuildCount extends StatefulComponent {
   const BuildCount(this.builder, {Key? key}) : super(key: key);
 
-  final WidgetBuilder builder;
+  final ComponentBuilder builder;
 
   @override
   _BuildCountState createState() => _BuildCountState();
@@ -392,19 +362,61 @@ class _BuildCountState extends State<BuildCount> {
   int buildCount = 0;
 
   @override
-  Widget build(BuildContext context) {
+  Iterable<Component> build(BuildContext context) {
     buildCount++;
-    return widget.builder(context);
-  }
-
-  @override
-  void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(properties);
-    properties.add(IntProperty('buildCount', buildCount));
+    return component.builder(context);
   }
 }
 
 Matcher throwsProviderNotFound<T>() {
-  return throwsA(isA<ProviderNotFoundException>()
-      .having((err) => err.valueType, 'valueType', T));
+  return throwsA(isA<ProviderNotFoundException>().having((err) => err.valueType, 'valueType', T));
+}
+
+class Container extends StatelessComponent {
+  Container({this.child, Key? key}) : super(key: key);
+
+  final Component? child;
+
+  @override
+  Iterable<Component> build(BuildContext context) sync* {
+    yield DomComponent(
+      tag: 'div',
+      child: child,
+    );
+  }
+}
+
+class GestureDetector extends StatelessComponent {
+  GestureDetector({
+    required this.child,
+    this.onTap,
+  });
+
+  final Component child;
+  final VoidCallback? onTap;
+
+  @override
+  Iterable<Component> build(BuildContext context) sync* {
+    yield DomComponent(
+      tag: 'button',
+      events: {
+        'click': (dynamic event) => onTap?.call(),
+      },
+      child: child,
+    );
+  }
+}
+
+class SizedBox extends StatelessComponent {
+  const SizedBox({this.child});
+
+  final Component? child;
+
+  @override
+  Iterable<Component> build(BuildContext context) sync* {
+    final child = this.child;
+    if (child != null) {
+      yield child;
+    }
+  }
 }

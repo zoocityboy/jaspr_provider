@@ -1,27 +1,32 @@
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/jaspr_provider.dart';
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 
 import 'common.dart';
 
 void main() {
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
   group('MultiProvider', () {
-    testWidgets('MultiProvider children can only access parent providers',
-        (tester) async {
-      final k1 = GlobalKey();
-      final k2 = GlobalKey();
-      final k3 = GlobalKey();
+    test('MultiProvider children can only access parent providers', () async {
+      const k1 = GlobalKey();
+      const k2 = GlobalKey();
+      const k3 = GlobalKey();
       final p1 = Provider.value(key: k1, value: 42);
       final p2 = Provider.value(key: k2, value: 'foo');
       final p3 = Provider<double>.value(key: k3, value: 44);
 
-      final keyChild = GlobalKey();
-      await tester.pumpWidget(MultiProvider(
+      const keyChild = GlobalKey();
+      await tester.pumpComponent(MultiProvider(
         providers: [p1, p2, p3],
-        child: Text('Foo', key: keyChild, textDirection: TextDirection.ltr),
+        child: const Text('Foo', key: keyChild),
       ));
 
-      expect(find.text('Foo'), findsOneWidget);
+      expect(find.text('Foo'), findsOneComponent);
 
       // p1 cannot access to p1/p2/p3
       expect(
@@ -65,19 +70,19 @@ void main() {
       expect(Provider.of<double>(keyChild.currentContext!, listen: false), 44);
     });
 
-    testWidgets('MultiProvider.providers with ignored child', (tester) async {
+    test('MultiProvider.providers with ignored child', () async {
       final p1 = Provider.value(
         value: 42,
         child: const Text('Bar'),
       );
 
-      await tester.pumpWidget(MultiProvider(
+      await tester.pumpComponent(MultiProvider(
         providers: [p1],
-        child: const Text('Foo', textDirection: TextDirection.ltr),
+        child: const Text('Foo'),
       ));
 
       expect(find.text('Bar'), findsNothing);
-      expect(find.text('Foo'), findsOneWidget);
+      expect(find.text('Foo'), findsOneComponent);
     });
   });
 }

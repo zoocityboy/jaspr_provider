@@ -8,9 +8,9 @@ environment:
 
 dependencies:
   collection: ^1.15.0
-  jaspr: ^0.1.2
+  jaspr: ^0.1.4
   nested: ^1.0.0
 
 dev_dependencies:
   jaspr_test: ^0.1.0
-  mocktail: ^0.3.0
+  mockito: ^5.2.0

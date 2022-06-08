@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/jaspr_provider.dart';
 
 import 'common.dart';
 
@@ -35,36 +33,42 @@ class ValueNotifierMock<T> extends Mock implements ValueNotifier<T> {
 }
 
 void main() {
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
   group('valueListenableProvider', () {
-    testWidgets('rebuilds when value change', (tester) async {
+    test('rebuilds when value change', () async {
       final listenable = ValueNotifier(0);
 
-      final child = Builder(
-          builder: (context) => Text(Provider.of<int>(context).toString(),
-              textDirection: TextDirection.ltr));
-
-      await tester.pumpWidget(
-        ValueListenableProvider.value(
-          value: listenable,
-          child: child,
-        ),
-      );
-
-      expect(find.text('0'), findsOneWidget);
-      listenable.value++;
-      await tester.pump();
-      expect(find.text('1'), findsOneWidget);
-    });
-
-    testWidgets("don't rebuild dependents by default", (tester) async {
-      var buildCount = 0;
-      final listenable = ValueNotifier(0);
-      final child = Builder(builder: (context) {
-        buildCount++;
-        return Container();
+      final child = Builder(builder: (context) sync* {
+        yield Text(Provider.of<int>(context).toString());
       });
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
+        ValueListenableProvider.value(
+          value: listenable,
+          child: child,
+        ),
+      );
+
+      expect(find.text('0'), findsOneComponent);
+      listenable.value++;
+      await tester.pump();
+      expect(find.text('1'), findsOneComponent);
+    });
+
+    test("don't rebuild dependents by default", () async {
+      var buildCount = 0;
+      final listenable = ValueNotifier(0);
+      final child = Builder(builder: (context) sync* {
+        buildCount++;
+        yield Container();
+      });
+
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           value: listenable,
           child: child,
@@ -73,7 +77,7 @@ void main() {
 
       expect(buildCount, 1);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           value: listenable,
           child: child,
@@ -83,9 +87,9 @@ void main() {
       expect(buildCount, 1);
     });
 
-    testWidgets('pass keys', (tester) async {
-      final key = GlobalKey();
-      await tester.pumpWidget(
+    test('pass keys', () async {
+      const key = GlobalKey();
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           key: key,
           value: ValueNotifier(42),
@@ -93,19 +97,18 @@ void main() {
         ),
       );
 
-      expect(key.currentWidget, isInstanceOf<ValueListenableProvider<int>>());
+      expect(key.currentComponent, isA<ValueListenableProvider<int>>());
     });
 
-    testWidgets("don't listen again if Value instance doesn't change",
-        (tester) async {
+    test("don't listen again if Value instance doesn't change", () async {
       final valueNotifier = ValueNotifierMock<int>(0);
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           value: valueNotifier,
           child: TextOf<int>(),
         ),
       );
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           value: valueNotifier,
           child: TextOf<int>(),
@@ -117,12 +120,12 @@ void main() {
       verifyNoMoreInteractions(valueNotifier);
     });
 
-    testWidgets('pass updateShouldNotify', (tester) async {
+    test('pass updateShouldNotify', () async {
       final shouldNotify = UpdateShouldNotifyMock<int>();
       when(shouldNotify(0, 1)).thenReturn(true);
 
       final notifier = ValueNotifier(0);
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         ValueListenableProvider.value(
           value: notifier,
           updateShouldNotify: shouldNotify,
@@ -137,20 +140,6 @@ void main() {
 
       verify(shouldNotify(0, 1)).called(1);
       verifyNoMoreInteractions(shouldNotify);
-    });
-
-    test('has correct debugFillProperties', () {
-      final builder = DiagnosticPropertiesBuilder();
-      final notifier = ValueNotifier(0);
-      ValueListenableProvider.value(value: notifier, child: const SizedBox())
-          .debugFillProperties(builder);
-      final description = builder.properties
-          .where(
-            (DiagnosticsNode node) => !node.isFiltered(DiagnosticLevel.info),
-          )
-          .map((DiagnosticsNode node) => node.toString())
-          .toList();
-      expect(description, <String>['value: 0']);
     });
   });
 }

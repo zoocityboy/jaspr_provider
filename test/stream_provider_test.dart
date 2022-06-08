@@ -1,10 +1,9 @@
 import 'dart:async';
 
-import 'package:flutter/widgets.dart';
-import 'package:flutter_test/flutter_test.dart';
-// ignore: import_of_legacy_library_into_null_safe
+import 'package:jaspr/jaspr.dart';
+import 'package:jaspr_provider/jaspr_provider.dart';
+import 'package:jaspr_test/jaspr_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:provider/jaspr_provider.dart';
 
 import 'common.dart';
 
@@ -23,8 +22,14 @@ class ErrorBuilderMock<T> extends Mock {
 }
 
 void main() {
-  testWidgets('works with MultiProvider', (tester) async {
-    await tester.pumpWidget(
+  late ComponentTester tester;
+
+  setUpAll(() {
+    tester = ComponentTester.setUp();
+  });
+
+  test('works with MultiProvider', () async {
+    await tester.pumpComponent(
       MultiProvider(
         providers: [
           StreamProvider(
@@ -36,20 +41,20 @@ void main() {
       ),
     );
 
-    expect(find.text('0'), findsOneWidget);
+    expect(find.text('0'), findsOneComponent);
 
     await Future.microtask(tester.pump);
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
   });
 
-  testWidgets(
+  test(
     'transition from stream to stream preserve state',
-    (tester) async {
+    () async {
       final controller = StreamController<int>(sync: true);
       final controller2 = StreamController<int>(sync: true);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         StreamProvider.value(
           initialData: 0,
           value: controller.stream,
@@ -57,15 +62,15 @@ void main() {
         ),
       );
 
-      expect(find.text('0'), findsOneWidget);
+      expect(find.text('0'), findsOneComponent);
 
       controller.add(1);
 
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         StreamProvider.value(
           initialData: 0,
           value: controller2.stream,
@@ -73,17 +78,17 @@ void main() {
         ),
       );
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
       controller.add(0);
       await tester.pump();
 
-      expect(find.text('1'), findsOneWidget);
+      expect(find.text('1'), findsOneComponent);
 
       controller2.add(2);
       await tester.pump();
 
-      expect(find.text('2'), findsOneWidget);
+      expect(find.text('2'), findsOneComponent);
 
       await tester.pump();
       // ignore: unawaited_futures
@@ -92,24 +97,23 @@ void main() {
       controller2.close();
     },
   );
-  testWidgets('throws if stream has error and catchError is missing',
-      (tester) async {
+  test('throws if stream has error and catchError is missing', () async {
     final controller = StreamController<int>();
+    await runZonedGuarded(
+      () async {
+        await tester.pumpComponent(
+          StreamProvider.value(
+            initialData: -1,
+            value: controller.stream,
+            child: TextOf<int>(),
+          ),
+        );
 
-    await tester.pumpWidget(
-      StreamProvider.value(
-        initialData: -1,
-        value: controller.stream,
-        child: TextOf<int>(),
-      ),
-    );
-
-    controller.addError(42);
-    await Future.microtask(tester.pump);
-
-    final dynamic exception = tester.takeException();
-    expect(exception, isFlutterError);
-    expect(exception.toString(), equals('''
+        controller.addError(42);
+        await Future.microtask(tester.pump);
+      },
+      (error, stack) {
+        expect(error.toString(), equals('''
 An exception was throw by _ControllerStream<int> listened by
 StreamProvider<int>, but no `catchError` was provided.
 
@@ -117,17 +121,18 @@ Exception:
 42
 '''));
 
-    // ignore: unawaited_futures
-    controller.close();
+        // ignore: unawaited_futures
+        controller.close();
+      },
+    );
   });
 
-  testWidgets('calls catchError if present and stream has error',
-      (tester) async {
+  test('calls catchError if present and stream has error', () async {
     final controller = StreamController<int>(sync: true);
     final catchError = ErrorBuilderMock<int>(0);
     when(catchError(any, 42)).thenReturn(42);
 
-    await tester.pumpWidget(
+    await tester.pumpComponent(
       StreamProvider.value(
         initialData: -1,
         value: controller.stream,
@@ -136,13 +141,13 @@ Exception:
       ),
     );
 
-    expect(find.text('-1'), findsOneWidget);
+    expect(find.text('-1'), findsOneComponent);
 
     controller.addError(42);
 
     await Future.microtask(tester.pump);
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
     verify(catchError(argThat(isNotNull), 42)).called(1);
     verifyNoMoreInteractions(catchError);
 
@@ -150,8 +155,8 @@ Exception:
     controller.close();
   });
 
-  testWidgets('works with null', (tester) async {
-    await tester.pumpWidget(
+  test('works with null', () async {
+    await tester.pumpComponent(
       StreamProvider<int>.value(
         initialData: 42,
         value: null,
@@ -159,20 +164,20 @@ Exception:
       ),
     );
 
-    expect(find.text('42'), findsOneWidget);
+    expect(find.text('42'), findsOneComponent);
 
-    await tester.pumpWidget(Container());
+    await tester.pumpComponent(Container());
   });
 
   group('StreamProvider()', () {
-    testWidgets('create and dispose stream with builder', (tester) async {
+    test('create and dispose stream with builder', () async {
       final stream = StreamMock<int>();
       final sub = StreamSubscriptionMock<int>();
       when(stream.listen(any, onError: anyNamed('onError'))).thenReturn(sub);
 
       final builder = InitialValueBuilderMock(stream);
 
-      await tester.pumpWidget(
+      await tester.pumpComponent(
         StreamProvider<int>(
           initialData: -1,
           create: builder,
@@ -185,7 +190,7 @@ Exception:
       verify(stream.listen(any, onError: anyNamed('onError'))).called(1);
       verifyNoMoreInteractions(stream);
 
-      await tester.pumpWidget(Container());
+      await tester.pumpComponent(Container());
 
       verifyNoMoreInteractions(builder);
       verify(sub.cancel()).called(1);
