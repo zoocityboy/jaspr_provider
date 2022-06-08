@@ -1,20 +1,13 @@
-[English](https://github.com/rrousselGit/provider/blob/master/README.md) | [Português](https://github.com/rrousselGit/provider/blob/master/resources/translations/pt_br/README.md) | [简体中文](https://github.com/rrousselGit/provider/blob/master/resources/translations/zh-CN/README.md) | [Español](https://github.com/rrousselGit/provider/blob/master/resources/translations/es_MX/README.md) | [한국어](https://github.com/rrousselGit/provider/blob/master/resources/translations/ko-KR/README.md) | [বাংলা](/resources/translations/bn_BD/README.md) | [日本語](https://github.com/rrousselGit/provider/blob/master/resources/translations/ja_JP/README.md)
-
-<a href="https://github.com/rrousselGit/provider/actions"><img src="https://github.com/rrousselGit/provider/workflows/Build/badge.svg" alt="Build Status"></a>
-[![codecov](https://codecov.io/gh/rrousselGit/provider/branch/master/graph/badge.svg)](https://codecov.io/gh/rrousselGit/provider) <a href="https://discord.gg/Bbumvej"><img src="https://img.shields.io/discord/765557403865186374.svg?logo=discord&color=blue" alt="Discord"></a>
-
-[<img src="https://raw.githubusercontent.com/rrousselGit/provider/master/resources/flutter_favorite.png" width="200" />](https://flutter.dev/docs/development/packages-and-plugins/favorites)
-
-A wrapper around [InheritedWidget]
+<!-- Add codecov tag later -->
+A wrapper around [InheritedComponent]
 to make them easier to use and more reusable.
 
-By using `provider` instead of manually writing [InheritedWidget], you get:
+By using `jaspr_provider` instead of manually writing [InheritedComponent], you get:
 
 - simplified allocation/disposal of resources
 - lazy-loading
 - a vastly reduced boilerplate over making a new class every time
-- devtool friendly – using Provider, the state of your application will be visible in the Flutter devtool
-- a common way to consume these [InheritedWidget]s (See [Provider.of]/[Consumer]/[Selector])
+- a common way to consume these [InheritedComponent]s (See [Provider.of]/[Consumer]/[Selector])
 - increased scalability for classes with a listening mechanism that grows exponentially
   in complexity (such as [ChangeNotifier], which is O(N) for dispatching notifications).
 
@@ -22,59 +15,7 @@ To read more about a `provider`, see its [documentation](https://pub.dev/documen
 
 See also:
 
-- [The official Flutter state management documentation](https://flutter.dev/docs/development/data-and-backend/state-mgmt/simple), which showcases how to use `provider` + [ChangeNotifier]
-- [flutter architecture sample](https://github.com/brianegan/flutter_architecture_samples/tree/master/change_notifier_provider), which contains an implementation of that app using `provider` + [ChangeNotifier]
-- [flutter_bloc](https://github.com/felangel/bloc) and [Mobx](https://github.com/mobxjs/mobx.dart), which uses a `provider` in their architecture
-
-## Migration from 4.x.x to 5.0.0-nullsafety
-
-- `initialData` for both `FutureProvider` and `StreamProvider` is now required.
-
-  To migrate, what used to be:
-
-  ```dart
-  FutureProvider<int>(
-    create: (context) => Future.value(42),
-    child: MyApp(),
-  )
-
-  Widget build(BuildContext context) {
-    final value = context.watch<int>();
-    return Text('$value');
-  }
-  ```
-
-  is now:
-
-  ```dart
-  FutureProvider<int?>(
-    initialValue: null,
-    create: (context) => Future.value(42),
-    child: MyApp(),
-  )
-
-  Widget build(BuildContext context) {
-    // be sure to specify the ? in watch<int?>
-    final value = context.watch<int?>();
-    return Text('$value');
-  }
-  ```
-
-- `ValueListenableProvider` is removed
-
-  To migrate, you can instead use `Provider` combined with `ValueListenableBuilder`:
-
-  ```dart
-  ValueListenableBuilder<int>(
-    valueListenable: myValueListenable,
-    builder: (context, value, _) {
-      return Provider<int>.value(
-        value: value,
-        child: MyApp(),
-      );
-    }
-  )
-  ```
+- [Original provider documentation](https://pub.dev/packages/provider)
 
 ## Usage
 
@@ -184,32 +125,32 @@ ChangeNotifierProvider(
 
 The easiest way to read a value is by using the extension methods on [BuildContext]:
 
-- `context.watch<T>()`, which makes the widget listen to changes on `T`
+- `context.watch<T>()`, which makes the component listen to changes on `T`
 - `context.read<T>()`, which returns `T` without listening to it
-- `context.select<T, R>(R cb(T value))`, which allows a widget to listen to only a small part of `T`.
+- `context.select<T, R>(R cb(T value))`, which allows a component to listen to only a small part of `T`.
 
 One can also use the static method `Provider.of<T>(context)`, which will behave similarly
 to `watch`. When the `listen` parameter is set to `false` (as in `Provider.of<T>(context, listen: false)`), then
 it will behave similarly to `read`.
 
-It's worth noting that `context.read<T>()` won't make a widget rebuild when the value
-changes and it cannot be called inside `StatelessWidget.build`/`State.build`.
+It's worth noting that `context.read<T>()` won't make a component rebuild when the value
+changes and it cannot be called inside `StatelessComponent.build`/`State.build`.
 On the other hand, it can be freely called outside of these methods.
 
-These methods will look up in the widget tree starting from the widget associated
+These methods will look up in the component tree starting from the component associated
 with the `BuildContext` passed and will return the nearest variable of type `T`
 found (or throw if nothing is found).
 
-This operation is O(1). It doesn't involve walking in the widget tree.
+This operation is O(1). It doesn't involve walking in the component tree.
 
 Combined with the first example of [exposing a value](#exposing-a-value), this
-the widget will read the exposed `String` and render "Hello World."
+the component will read the exposed `String` and render "Hello World."
 
 ```dart
-class Home extends StatelessWidget {
+class Home extends StatelessComponent {
   @override
-  Widget build(BuildContext context) {
-    return Text(
+  Iterable<Component> build(BuildContext context) sync* {
+    yield Text(
       // Don't forget to pass the type of the object you want to obtain to `watch`!
       context.watch<String>(),
     );
@@ -230,7 +171,7 @@ for more information.
 ### Optionally depending on a provider
 
 Sometimes, we may want to support cases where a provider does not exist. An
-example would be for reusable widgets that could be used in various locations,
+example would be for reusable components that could be used in various locations,
 including outside of a provider.
 
 To do so, when calling `context.watch`/`context.read`, make the generic type
@@ -262,7 +203,7 @@ Provider<Something>(
     create: (_) => SomethingElse(),
     child: Provider<AnotherThing>(
       create: (_) => AnotherThing(),
-      child: someWidget,
+      child: someComponent,
     ),
   ),
 ),
@@ -277,7 +218,7 @@ MultiProvider(
     Provider<SomethingElse>(create: (_) => SomethingElse()),
     Provider<AnotherThing>(create: (_) => AnotherThing()),
   ],
-  child: someWidget,
+  child: someComponent,
 )
 ```
 
@@ -286,8 +227,6 @@ the appearance of the code.
 
 ### ProxyProvider
 
-Since the 3.0.0, there is a new kind of provider: `ProxyProvider`.
-
 `ProxyProvider` is a provider that combines multiple values from other providers into a new object and sends the result to `Provider`.
 
 That new object will then be updated whenever one of the provider we depend on gets updated.
@@ -295,8 +234,8 @@ That new object will then be updated whenever one of the provider we depend on g
 The following example uses `ProxyProvider` to build translations based on a counter coming from another provider.
 
 ```dart
-Widget build(BuildContext context) {
-  return MultiProvider(
+Iterable<Component> build(BuildContext context) sync* {
+  yield MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => Counter()),
       ProxyProvider<Counter, Translations>(
@@ -330,71 +269,6 @@ It comes under multiple variations, such as:
 
 ### FAQ
 
-#### Can I inspect the content of my objects?
-
-Flutter comes with a [devtool](https://github.com/flutter/devtools) that shows
-what the widget tree is at a given moment.
-
-Since providers are widgets, they are also visible in that devtool:
-
-<img src="https://raw.githubusercontent.com/rrousselGit/provider/master/resources/devtools_providers.jpg" width="200" />
-
-From there, if you click on one provider, you will be able to see the value it exposes:
-
-<img src="https://raw.githubusercontent.com/rrousselGit/provider/master/resources/expanded_devtools.jpg" width="200" />
-
-(screenshot of the devtools using the `example` folder)
-
-#### The devtool only shows "Instance of MyClass". What can I do?
-
-By default, the devtool relies on `toString`, which defaults to "Instance of MyClass".
-
-To have something more useful, you have two solutions:
-
-- use the [Diagnosticable](https://api.flutter.dev/flutter/foundation/Diagnosticable-class.html) API from Flutter.
-
-  For most cases, I will use [DiagnosticableTreeMixin] on your objects, followed by a custom implementation of [debugFillProperties](https://api.flutter.dev/flutter/foundation/DiagnosticableTreeMixin/debugFillProperties.html).
-
-  ```dart
-  class MyClass with DiagnosticableTreeMixin {
-    MyClass({this.a, this.b});
-
-    final int a;
-    final String b;
-
-    @override
-    void debugFillProperties(DiagnosticPropertiesBuilder properties) {
-      super.debugFillProperties(properties);
-      // list all the properties of your class here.
-      // See the documentation of debugFillProperties for more information.
-      properties.add(IntProperty('a', a));
-      properties.add(StringProperty('b', b));
-    }
-  }
-  ```
-
-- Override `toString`.
-
-  If you cannot use [DiagnosticableTreeMixin] (like if your class is in a package
-  that does not depend on Flutter), then you can override `toString`.
-
-  This is easier than using [DiagnosticableTreeMixin] but is less powerful:
-  You will not be able to expand/collapse the details of your object.
-
-  ```dart
-  class MyClass with DiagnosticableTreeMixin {
-    MyClass({this.a, this.b});
-
-    final int a;
-    final String b;
-
-    @override
-    String toString() {
-      return '$runtimeType(a: $a, b: $b)';
-    }
-  }
-  ```
-
 #### I have an exception when obtaining Providers inside `initState`. What can I do?
 
 This exception happens because you're trying to listen to a provider from a
@@ -406,7 +280,7 @@ specify that you do not care about updates.
 As such, instead of:
 
 ```dart
-initState() {
+void initState() {
   super.initState();
   print(context.watch<Foo>().value);
 }
@@ -417,7 +291,7 @@ you can do:
 ```dart
 Value value;
 
-Widget build(BuildContext context) {
+Iterable<Component> build(BuildContext context) sync* {
   final value = context.watch<Foo>.value;
   if (value != this.value) {
     this.value = value;
@@ -431,7 +305,7 @@ which will print `value` whenever it changes (and only when it changes).
 Alternatively, you can do:
 
 ```dart
-initState() {
+void initState() {
   super.initState();
   print(context.read<Foo>().value);
 }
@@ -460,12 +334,12 @@ ChangeNotifierProvider(create: (_) => Example()),
 
 #### I use [ChangeNotifier], and I have an exception when I update it. What happens?
 
-This likely happens because you are modifying the [ChangeNotifier] from one of its descendants _while the widget tree is building_.
+This likely happens because you are modifying the [ChangeNotifier] from one of its descendants _while the component tree is building_.
 
 A typical situation where this happens is when starting an http request, where the future is stored inside the notifier:
 
 ```dart
-initState() {
+void initState() {
   super.initState();
   context.read<MyNotifier>().fetchSomething();
 }
@@ -473,7 +347,7 @@ initState() {
 
 This is not allowed because the state update is synchronous.
 
-This means that some widgets may build _before_ the mutation happens (getting an old value), while other widgets will build _after_ the mutation is complete (getting a new value). This could cause inconsistencies in your UI and is therefore not allowed.
+This means that some components may build _before_ the mutation happens (getting an old value), while other components will build _after_ the mutation is complete (getting a new value). This could cause inconsistencies in your UI and is therefore not allowed.
 
 Instead, you should perform that mutation in a place that would affect the
 entire tree equally:
@@ -494,7 +368,7 @@ entire tree equally:
 
 - asynchronously at the end of the frame:
   ```dart
-  initState() {
+  void initState() {
     super.initState();
     Future.microtask(() =>
       context.read<MyNotifier>().fetchSomething(someValue);
@@ -508,15 +382,15 @@ entire tree equally:
 No.
 
 You can use any object to represent your state. For example, an alternate
-architecture is to use `Provider.value()` combined with a `StatefulWidget`.
+architecture is to use `Provider.value()` combined with a `StatefulComponent`.
 
 Here's a counter example using such architecture:
 
 ```dart
-class Example extends StatefulWidget {
+class Example extends StatefulComponent {
   const Example({Key key, this.child}) : super(key: key);
 
-  final Widget child;
+  final Component child;
 
   @override
   ExampleState createState() => ExampleState();
@@ -532,12 +406,12 @@ class ExampleState extends State<Example> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Provider.value(
+  Iterable<Component> build(BuildContext context) sync* {
+    yield Provider.value(
       value: _count,
       child: Provider.value(
         value: this,
-        child: widget.child,
+        child: component.child,
       ),
     );
   }
@@ -547,13 +421,13 @@ class ExampleState extends State<Example> {
 where we can read the state by doing:
 
 ```dart
-return Text(context.watch<int>().toString());
+yield Text(context.watch<int>().toString());
 ```
 
 and modify the state with:
 
 ```dart
-return FloatingActionButton(
+yield Button(
   onPressed: () => context.read<ExampleState>().increment(),
   child: Icon(Icons.plus_one),
 );
@@ -567,47 +441,47 @@ Yes. `provider` exposes all the small components that make a fully-fledged provi
 
 This includes:
 
-- `SingleChildStatelessWidget`, to make any widget works with `MultiProvider`.
-  This interface is exposed as part of `package:provider/single_child_widget`
+- `SingleChildStatelessComponent`, to make any component works with `MultiProvider`.
+  This interface is exposed as part of `package:provider/single_child_component`
 
-- [InheritedProvider], the generic `InheritedWidget` obtained when doing `context.watch`.
+- [InheritedProvider], the generic `InheritedComponent` obtained when doing `context.watch`.
 
 Here's an example of a custom provider to use `ValueNotifier` as the state:
 https://gist.github.com/rrousselGit/4910f3125e41600df3c2577e26967c91
 
-#### My widget rebuilds too often. What can I do?
+#### My component rebuilds too often. What can I do?
 
 Instead of `context.watch`, you can use `context.select` to listen only to the specific set of properties on the obtained object.
 
 For example, while you can write:
 
 ```dart
-Widget build(BuildContext context) {
+Iterable<Component> build(BuildContext context) sync* {
   final person = context.watch<Person>();
-  return Text(person.name);
+  yield Text(person.name);
 }
 ```
 
-It may cause the widget to rebuild if something other than `name` changes.
+It may cause the component to rebuild if something other than `name` changes.
 
 Instead, you can use `context.select` to listen only to the `name` property:
 
 ```dart
-Widget build(BuildContext context) {
+Iterable<Component> build(BuildContext context) sync* {
   final name = context.select((Person p) => p.name);
-  return Text(name);
+  yield Text(name);
 }
 ```
 
-This way, the widget won't unnecessarily rebuild if something other than `name` changes.
+This way, the component won't unnecessarily rebuild if something other than `name` changes.
 
-Similarly, you can use [Consumer]/[Selector]. Their optional `child` argument allows rebuilding only a particular part of the widget tree:
+Similarly, you can use [Consumer]/[Selector]. Their optional `child` argument allows rebuilding only a particular part of the component tree:
 
 ```dart
 Foo(
   child: Consumer<A>(
-    builder: (_, a, child) {
-      return Bar(a: a, child: child);
+    builder: (_, a, child) sync* {
+      yield Bar(a: a, child: child);
     },
     child: Baz(),
   ),
@@ -619,7 +493,7 @@ unnecessarily rebuild.
 
 #### Can I obtain two different providers using the same type?
 
-No. While you can have multiple providers sharing the same type, a widget will be able to obtain only one of them: the closest ancestor.
+No. While you can have multiple providers sharing the same type, a component will be able to obtain only one of them: the closest ancestor.
 
 Instead, it would help if you explicitly gave both providers a different type.
 
@@ -660,11 +534,11 @@ class ProviderImplementation with ChangeNotifier implements ProviderInterface {
   ...
 }
 
-class Foo extends StatelessWidget {
+class Foo extends StatelessComponent {
   @override
   build(context) {
     final provider = Provider.of<ProviderInterface>(context);
-    return ...
+    yield ...
   }
 }
 
@@ -678,20 +552,20 @@ ChangeNotifierProvider<ProviderInterface>(
 
 `provider` exposes a few different kinds of "provider" for different types of objects.
 
-The complete list of all the objects available is [here](https://pub.dev/documentation/provider/latest/provider/provider-library.html)
+The complete list of all the objects available is [here](https://pub.dev/documentation/jaspr_provider/latest/provider/jaspr_provider-library.html)
 
 | name                                                                                                                          | description                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Provider](https://pub.dartlang.org/documentation/provider/latest/provider/Provider-class.html)                               | The most basic form of provider. It takes a value and exposes it, whatever the value is.                                                                               |
-| [ListenableProvider](https://pub.dartlang.org/documentation/provider/latest/provider/ListenableProvider-class.html)           | A specific provider for Listenable object. ListenableProvider will listen to the object and ask widgets which depend on it to rebuild whenever the listener is called. |
-| [ChangeNotifierProvider](https://pub.dartlang.org/documentation/provider/latest/provider/ChangeNotifierProvider-class.html)   | A specification of ListenableProvider for ChangeNotifier. It will automatically call `ChangeNotifier.dispose` when needed.                                             |
-| [ValueListenableProvider](https://pub.dartlang.org/documentation/provider/latest/provider/ValueListenableProvider-class.html) | Listen to a ValueListenable and only expose `ValueListenable.value`.                                                                                                   |
-| [StreamProvider](https://pub.dartlang.org/documentation/provider/latest/provider/StreamProvider-class.html)                   | Listen to a Stream and expose the latest value emitted.                                                                                                                |
-| [FutureProvider](https://pub.dartlang.org/documentation/provider/latest/provider/FutureProvider-class.html)                   | Takes a `Future` and updates dependents when the future completes.                                                                                                     |
+| [Provider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/Provider-class.html)                               | The most basic form of provider. It takes a value and exposes it, whatever the value is.                                                                               |
+| [ListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ListenableProvider-class.html)           | A specific provider for Listenable object. ListenableProvider will listen to the object and ask components which depend on it to rebuild whenever the listener is called. |
+| [ChangeNotifierProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ChangeNotifierProvider-class.html)   | A specification of ListenableProvider for ChangeNotifier. It will automatically call `ChangeNotifier.dispose` when needed.                                             |
+| [ValueListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ValueListenableProvider-class.html) | Listen to a ValueListenable and only expose `ValueListenable.value`.                                                                                                   |
+| [StreamProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/StreamProvider-class.html)                   | Listen to a Stream and expose the latest value emitted.                                                                                                                |
+| [FutureProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/FutureProvider-class.html)                   | Takes a `Future` and updates dependents when the future completes.                                                                                                     |
 
 ### My application throws a StackOverflowError because I have too many providers, what can I do?
 
-If you have a very large number of providers (150+), it is possible that some devices will throw a `StackOverflowError` because you end-up building too many widgets at once.
+If you have a very large number of providers (150+), it is possible that some devices will throw a `StackOverflowError` because you end-up building too many components at once.
 
 In this situation, you have a few solutions:
 
@@ -718,7 +592,7 @@ In this situation, you have a few solutions:
   bool step1 = false;
   bool step2 = false;
   @override
-  initState() {
+  void initState() {
     super.initState();
     Future(() {
       setState(() => step1 = true);
@@ -730,21 +604,13 @@ In this situation, you have a few solutions:
   ```
 
 - Consider opting out of using `MultiProvider`.
-  `MultiProvider` works by adding a widget between every providers. Not using `MultiProvider` can
+  `MultiProvider` works by adding a component between every providers. Not using `MultiProvider` can
   increase the limit before a `StackOverflowError` is reached.
 
-## Sponsors
-
-<p align="center">
-  <a href="https://raw.githubusercontent.com/rrousselGit/freezed/master/sponsorkit/sponsors.svg">
-    <img src='https://raw.githubusercontent.com/rrousselGit/freezed/master/sponsorkit/sponsors.svg'/>
-  </a>
-</p>
-
-[provider.of]: https://pub.dev/documentation/provider/latest/provider/Provider/of.html
-[selector]: https://pub.dev/documentation/provider/latest/provider/Selector-class.html
-[consumer]: https://pub.dev/documentation/provider/latest/provider/Consumer-class.html
-[changenotifier]: https://api.flutter.dev/flutter/foundation/ChangeNotifier-class.html
-[inheritedwidget]: https://api.flutter.dev/flutter/widgets/InheritedWidget-class.html
-[inheritedprovider]: https://pub.dev/documentation/provider/latest/provider/InheritedProvider-class.html
-[diagnosticabletreemixin]: https://api.flutter.dev/flutter/foundation/DiagnosticableTreeMixin-mixin.html
+[provider.of]: https://pub.dev/documentation/jaspr_provider/latest/provider/Provider/of.html
+[selector]: https://pub.dev/documentation/jaspr_provider/latest/provider/Selector-class.html
+[consumer]: https://pub.dev/documentation/jaspr_provider/latest/provider/Consumer-class.html
+[changenotifier]: https://pub.dev/documentation/jaspr/latest/jaspr_server/ChangeNotifier-class.html
+[inheritedcomponent]: https://pub.dev/documentation/jaspr/latest/jaspr_server/InheritedComponent-class.html
+[inheritedprovider]: https://pub.dev/documentation/jaspr_provider/latest/provider/InheritedProvider-class.html
+[buildcontext]: https://pub.dev/documentation/jaspr/latest/jaspr_server/BuildContext-class.html
