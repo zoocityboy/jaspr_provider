@@ -42,7 +42,7 @@ typedef StartListening<T> = VoidCallback Function(
 
 /// A generic implementation of an [InheritedComponent].
 ///
-/// Any descendant of this widget can obtain `value` using [Provider.of].
+/// Any descendant of this component can obtain `value` using [Provider.of].
 ///
 /// Do not use this class directly unless you are creating a custom "Provider".
 /// Instead use [Provider] class, which wraps [InheritedProvider].
@@ -55,7 +55,7 @@ class InheritedProvider<T> extends SingleChildStatelessComponent {
   /// Creates a value, then expose it to its descendants.
   ///
   /// The value will be disposed of when [InheritedProvider] is removed from
-  /// the widget tree.
+  /// the component tree.
   InheritedProvider({
     Key? key,
     Create<T>? create,
@@ -116,9 +116,9 @@ class InheritedProvider<T> extends SingleChildStatelessComponent {
   /// ```dart
   /// Provider<int>(
   ///   create: (context) => 42,
-  ///   builder: (context, child) {
+  ///   builder: (context, child) sync* {
   ///     final value = context.watch<int>();
-  ///     return Text('$value');
+  ///     yield Text('$value');
   ///   }
   /// )
   /// ```
@@ -129,9 +129,9 @@ class InheritedProvider<T> extends SingleChildStatelessComponent {
   /// Provider<int>(
   ///   create: (context) => 42,
   ///   child: Builder(
-  ///     builder: (context) {
+  ///     builder: (context) sync* {
   ///       final value = context.watch<int>();
-  ///       return Text('$value');
+  ///       yield Text('$value');
   ///     },
   ///   ),
   /// )
@@ -167,14 +167,14 @@ class InheritedProvider<T> extends SingleChildStatelessComponent {
 }
 
 class _InheritedProviderElement<T> extends SingleChildStatelessElement {
-  _InheritedProviderElement(InheritedProvider<T> widget) : super(widget);
+  _InheritedProviderElement(InheritedProvider<T> component) : super(component);
 }
 
 bool _debugIsSelecting = false;
 
 /// Adds a `select` method on [BuildContext].
 extension SelectContext on BuildContext {
-  /// Watch a value of type [T] exposed from a provider, and mark this widget for rebuild
+  /// Watch a value of type [T] exposed from a provider, and mark this component for rebuild
   /// on changes of that value.
   ///
   /// If [T] is nullable and no matching providers are found, [watch] will
@@ -182,20 +182,20 @@ extension SelectContext on BuildContext {
   /// If [T] is non-nullable and the provider obtained returned `null`, will
   /// throw [ProviderNullException].
   ///
-  /// This allows widgets to optionally depend on a provider:
+  /// This allows components to optionally depend on a provider:
   ///
   /// ```dart
   /// runApp(
-  ///   Builder(builder: (context) {
+  ///   Builder(builder: (context) sync* {
   ///     final title = context.select<Movie?, String>((movie) => movie?.title);
   ///
   ///     if (title == null) Text('no Movie found');
-  ///     return Text(title);
+  ///     yield Text(title);
   ///   }),
   /// );
   /// ```
   ///
-  /// [select] must be used only inside the `build` method of a widget.
+  /// [select] must be used only inside the `build` method of a component.
   /// It will not work inside other life-cycles, including [State.didChangeDependencies].
   ///
   /// By using [select], instead of watching the entire object, the listener will
@@ -217,17 +217,17 @@ extension SelectContext on BuildContext {
   /// }
   /// ```
   ///
-  /// Then a widget may want to listen to a person's `name` without listening
+  /// Then a component may want to listen to a person's `name` without listening
   /// to its `age`.
   ///
   /// This cannot be done using `context.watch`/[Provider.of]. Instead, we
   /// can use [select], by writing the following:
   ///
   /// ```dart
-  /// Widget build(BuildContext context) {
+  /// Iterable<Component> build(BuildContext context) sync* {
   ///   final name = context.select((Person p) => p.name);
   ///
-  ///   return Text(name);
+  ///   yield Text(name);
   /// }
   /// ```
   ///
@@ -258,7 +258,7 @@ extension SelectContext on BuildContext {
           },
         );
       } else {
-        // tell Flutter to rebuild the widget when relocated using GlobalKey
+        // tell Flutter to rebuild the component when relocated using GlobalKey
         // if no provider were found before.
         dependOnInheritedComponentOfExactType<_InheritedProviderScope<T?>>();
       }
@@ -285,7 +285,7 @@ abstract class InheritedContext<T> extends BuildContext {
 
   /// Marks the [InheritedProvider] as needing to update dependents.
   ///
-  /// This bypass [InheritedComponent.updateShouldNotify] and will force widgets
+  /// This bypass [InheritedComponent.updateShouldNotify] and will force components
   /// that depends on [T] to rebuild.
   void markNeedsNotifyDependents();
 
@@ -308,7 +308,7 @@ class _InheritedProviderScope<T> extends InheritedComponent {
   final String debugType;
 
   @override
-  bool updateShouldNotify(InheritedComponent oldWidget) {
+  bool updateShouldNotify(InheritedComponent oldComponent) {
     return false;
   }
 
@@ -325,7 +325,7 @@ class _Dependency<T> {
 }
 
 class _InheritedProviderScopeElement<T> extends InheritedElement implements InheritedContext<T> {
-  _InheritedProviderScopeElement(_InheritedProviderScope<T> widget) : super(widget);
+  _InheritedProviderScopeElement(_InheritedProviderScope<T> component) : super(component);
 
   bool _shouldNotifyDependents = false;
   bool _debugInheritLocked = false;
@@ -335,13 +335,13 @@ class _InheritedProviderScopeElement<T> extends InheritedElement implements Inhe
   late final _DelegateState<T, _Delegate<T>> _delegateState = component.owner._delegate.createState()..element = this;
 
   @override
-  InheritedElement? getElementForInheritedComponentOfExactType<InheritedWidgetType extends InheritedComponent>() {
+  InheritedElement? getElementForInheritedComponentOfExactType<InheritedComponentType extends InheritedComponent>() {
     InheritedElement? inheritedElement;
 
     // An InheritedProvider<T>'s update tries to obtain a parent provider of
     // the same type.
     visitAncestorElements((parent) {
-      inheritedElement = parent.getElementForInheritedComponentOfExactType<InheritedWidgetType>();
+      inheritedElement = parent.getElementForInheritedComponentOfExactType<InheritedComponentType>();
       return false;
     });
     return inheritedElement;
@@ -382,7 +382,7 @@ class _InheritedProviderScopeElement<T> extends InheritedElement implements Inhe
   }
 
   @override
-  void notifyDependent(InheritedComponent oldWidget, Element dependent) {
+  void notifyDependent(InheritedComponent oldComponent, Element dependent) {
     final dependencies = getDependencies(dependent);
 
     var shouldNotify = false;
@@ -423,9 +423,9 @@ class _InheritedProviderScopeElement<T> extends InheritedElement implements Inhe
   }
 
   @override
-  void update(_InheritedProviderScope<T> newWidget) {
+  void update(_InheritedProviderScope<T> newComponent) {
     assert(() {
-      if (component.owner._delegate.runtimeType != newWidget.owner._delegate.runtimeType) {
+      if (component.owner._delegate.runtimeType != newComponent.owner._delegate.runtimeType) {
         throw StateError('''
 Rebuilt $component using a different constructor.
       
@@ -437,16 +437,16 @@ If you're in this situation, consider passing a `key` unique to each individual 
     }());
 
     _isBuildFromExternalSources = true;
-    _updatedShouldNotify = _delegateState.willUpdateDelegate(newWidget.owner._delegate);
-    super.update(newWidget);
+    _updatedShouldNotify = _delegateState.willUpdateDelegate(newComponent.owner._delegate);
+    super.update(newComponent);
     _updatedShouldNotify = false;
   }
 
   @override
-  void updated(InheritedComponent oldWidget) {
-    super.updated(oldWidget);
+  void updated(InheritedComponent oldComponent) {
+    super.updated(oldComponent);
     if (_updatedShouldNotify) {
-      notifyClients(oldWidget);
+      notifyClients(oldComponent);
     }
   }
 
@@ -510,15 +510,15 @@ If you're in this situation, consider passing a `key` unique to each individual 
     assert(() {
       if (_debugInheritLocked) {
         throw Exception('''
-Tried to listen to an InheritedWidget
+Tried to listen to an InheritedComponent
 in a life-cycle that will never be called again.
 This error typically happens when calling Provider.of with `listen` to `true`,
 in a situation where listening to the provider doesn't make sense, such as:
-- initState of a StatefulWidget
+- initState of a StatefulComponent
 - the "create" callback of a provider
 
 This is undesired because these life-cycles are called only once in the
-lifetime of a widget. As such, while `listen` is `true`, the widget has
+lifetime of a component. As such, while `listen` is `true`, the component has
 no mean to handle the update scenario.
 
 To fix, consider:
@@ -594,7 +594,7 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
   VoidCallback? _removeListener;
   bool _didInitValue = false;
   T? _value;
-  _CreateInheritedProvider<T>? _previousWidget;
+  _CreateInheritedProvider<T>? _previousComponent;
   Object? _initError;
 
   @override
@@ -730,14 +730,14 @@ class _CreateInheritedProviderState<T> extends _DelegateState<T, _CreateInherite
           _removeListener!();
           _removeListener = null;
         }
-        _previousWidget?.dispose?.call(element!, previousValue as T);
+        _previousComponent?.dispose?.call(element!, previousValue as T);
       }
     }
 
     if (shouldNotify) {
       element!._shouldNotifyDependents = true;
     }
-    _previousWidget = delegate;
+    _previousComponent = delegate;
     return super.build(isBuildFromExternalSources: isBuildFromExternalSources);
   }
 
@@ -803,9 +803,9 @@ class _ValueInheritedProviderState<T> extends _DelegateState<T, _ValueInheritedP
   bool get hasValue => true;
 }
 
-/// A builder that builds a widget given a child.
+/// A builder that builds a component given a child.
 ///
-/// The child should typically be part of the returned widget tree.
+/// The child should typically be part of the returned component tree.
 ///
 ///
 /// See also:

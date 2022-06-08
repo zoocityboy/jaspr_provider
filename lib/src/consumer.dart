@@ -24,8 +24,8 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 /// @override
-/// Iterable<Component> build(BuildContext context) {
-///   return ChangeNotifierProvider(
+/// Iterable<Component> build(BuildContext context) sync* {
+///   yield ChangeNotifierProvider(
 ///     create: (_) => Foo(),
 ///     child: Text(Provider.of<Foo>(context).value),
 ///   );
@@ -42,11 +42,11 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 /// @override
-/// Iterable<Component> build(BuildContext context) {
+/// Iterable<Component> build(BuildContext context) sync* {
 ///   return ChangeNotifierProvider(
 ///     create: (_) => Foo(),
 ///     child: Consumer<Foo>(
-///       builder: (_, foo, __) => Text(foo.value),
+///       builder: (_, foo, __) => [Text(foo.value)],
 ///     },
 ///   );
 /// }
@@ -67,8 +67,8 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 ///  @override
-///  Iterable<Component> build(BuildContext context) {
-///    return FooWidget(
+///  Iterable<Component> build(BuildContext context) sync* {
+///    yield FooWidget(
 ///      child: BarWidget(
 ///        bar: Provider.of<Bar>(context),
 ///      ),
@@ -88,10 +88,10 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 ///  @override
-///  Iterable<Component> build(BuildContext context) {
-///    return FooWidget(
+///  Iterable<Component> build(BuildContext context) sync* {
+///    yield FooWidget(
 ///      child: Consumer<Bar>(
-///        builder: (_, bar, __) => BarWidget(bar: bar),
+///        builder: (_, bar, __) => [BarWidget(bar: bar)],
 ///      ),
 ///    );
 ///  }
@@ -103,8 +103,8 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 ///  @override
-///  Iterable<Component> build(BuildContext context) {
-///    return FooWidget(
+///  Iterable<Component> build(BuildContext context) sync* {
+///    yield FooWidget(
 ///      foo: Provider.of<Foo>(context),
 ///      child: BarWidget(),
 ///    );
@@ -116,9 +116,9 @@ import 'single_child_stateless_component.dart';
 ///
 /// ```dart
 ///  @override
-///  Iterable<Component> build(BuildContext context) {
-///    return Consumer<Foo>(
-///      builder: (_, foo, child) => FooWidget(foo: foo, child: child),
+///  Iterable<Component> build(BuildContext context) sync* {
+///    yield Consumer<Foo>(
+///      builder: (_, foo, child) => [FooWidget(foo: foo, child: child)],
 ///      child: BarWidget(),
 ///    );
 ///  }
@@ -144,7 +144,7 @@ import 'single_child_stateless_component.dart';
 ///     Provider(create: (_) => Foo()),
 ///     Consumer<Foo>(
 ///       builder: (context, foo, child) =>
-///         Provider.value(value: foo.bar, child: child),
+///         [Provider.value(value: foo.bar, child: child)],
 ///     )
 ///   ],
 /// );

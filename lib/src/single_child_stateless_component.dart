@@ -36,11 +36,11 @@ mixin _SingleChildComponentElementMixin on Element {
 class _NestedHook extends StatelessComponent {
   _NestedHook({
     this.injectedChild,
-    required this.wrappedWidget,
+    required this.wrappedComponent,
     required this.owner,
   });
 
-  final SingleChildComponent wrappedWidget;
+  final SingleChildComponent wrappedComponent;
   final Component? injectedChild;
   final _NestedElement owner;
 
@@ -51,29 +51,29 @@ class _NestedHook extends StatelessComponent {
   Iterable<Component> build(BuildContext context) => throw StateError('handled internally');
 }
 
-/// A widget that simplify the writing of deeply nested widget trees.
+/// A component that simplify the writing of deeply nested component trees.
 ///
-/// It relies on the new kind of widget [SingleChildComponent], which has two
+/// It relies on the new kind of component [SingleChildComponent], which has two
 /// concrete implementations:
 /// - [SingleChildStatelessComponent]
 ///
 /// They are both respectively a [SingleChildComponent] variant of [StatelessComponent]
 /// and [StatefulComponent].
 ///
-/// The difference between a widget and its single-child variant is that they have
+/// The difference between a component and its single-child variant is that they have
 /// a custom `build` method that takes an extra parameter.
 ///
-/// As such, a `StatelessWidget` would be:
+/// As such, a `StatelessComponent` would be:
 ///
 /// ```dart
-/// class MyWidget extends StatelessWidget {
-///   MyWidget({Key key, this.child}): super(key: key);
+/// class MyComponent extends StatelessComponent {
+///   MyComponent({Key key, this.child}): super(key: key);
 ///
-///   final Widget child;
+///   final Component child;
 ///
 ///   @override
-///   Iterable<Component> build(BuildContext context) {
-///     return SomethingWidget(child: child);
+///   Iterable<Component> build(BuildContext context) sync* {
+///     yield SomethingComponent(child: child);
 ///   }
 /// }
 /// ```
@@ -81,21 +81,21 @@ class _NestedHook extends StatelessComponent {
 /// Whereas a [SingleChildStatelessComponent] would be:
 ///
 /// ```dart
-/// class MyWidget extends SingleChildStatelessWidget {
-///   MyWidget({Key key, Widget child}): super(key: key, child: child);
+/// class MyComponent extends SingleChildStatelessComponent {
+///   MyComponent({Key key, Component child}): super(key: key, child: child);
 ///
 ///   @override
-///   Iterable<Component> buildWithChild(BuildContext context, Widget child) sync* {
-///     return SomethingWidget(child: child);
+///   Iterable<Component> buildWithChild(BuildContext context, Component child) sync* {
+///     yield SomethingComponent(child: child);
 ///   }
 /// }
 /// ```
 ///
-/// This allows our new `MyWidget` to be used both with:
+/// This allows our new `MyComponent` to be used both with:
 ///
 /// ```dart
-/// MyWidget(
-///   child: AnotherWidget(),
+/// MyComponent(
+///   child: AnotherComponent(),
 /// )
 /// ```
 ///
@@ -104,10 +104,10 @@ class _NestedHook extends StatelessComponent {
 /// ```dart
 /// Nested(
 ///   children: [
-///     MyWidget(),
+///     MyComponent(),
 ///     ...
 ///   ],
-///   child: AnotherWidget(),
+///   child: AnotherComponent(),
 /// )
 /// ```
 class Nested extends StatelessComponent implements SingleChildComponent {
@@ -134,7 +134,7 @@ class Nested extends StatelessComponent implements SingleChildComponent {
 }
 
 class _NestedElement extends StatelessElement with _SingleChildComponentElementMixin {
-  _NestedElement(Nested widget) : super(widget);
+  _NestedElement(Nested component) : super(component);
 
   @override
   Nested get component => super.component as Nested;
@@ -149,18 +149,18 @@ class _NestedElement extends StatelessElement with _SingleChildComponentElementM
     for (final child in component._children.reversed) {
       nextNode = nestedHook = _NestedHook(
         owner: this,
-        wrappedWidget: child,
+        wrappedComponent: child,
         injectedChild: nextNode,
       );
     }
 
     if (nestedHook != null) {
-      // We manually update _NestedHookElement instead of letter widgets do their thing
-      // because an item N may be constant but N+1 not. So, if we used widgets
+      // We manually update _NestedHookElement instead of letter components do their thing
+      // because an item N may be constant but N+1 not. So, if we used components
       // then N+1 wouldn't rebuild because N didn't change
       for (final node in nodes) {
         node
-          ..wrappedChild = nestedHook!.wrappedWidget
+          ..wrappedChild = nestedHook!.wrappedComponent
           ..injectedChild = nestedHook.injectedChild;
 
         final next = nestedHook.injectedChild;
@@ -177,7 +177,7 @@ class _NestedElement extends StatelessElement with _SingleChildComponentElementM
 }
 
 class _NestedHookElement extends StatelessElement {
-  _NestedHookElement(_NestedHook widget) : super(widget);
+  _NestedHookElement(_NestedHook component) : super(component);
 
   @override
   _NestedHook get component => super.component as _NestedHook;
@@ -188,9 +188,9 @@ class _NestedHookElement extends StatelessElement {
     final previous = _injectedChild;
     if (value is _NestedHook &&
         previous is _NestedHook &&
-        Component.canUpdate(value.wrappedWidget, previous.wrappedWidget)) {
-      // no need to rebuild the wrapped widget just for a _NestedHook.
-      // The widget doesn't matter here, only its Element.
+        Component.canUpdate(value.wrappedComponent, previous.wrappedComponent)) {
+      // no need to rebuild the wrapped component just for a _NestedHook.
+      // The component doesn't matter here, only its Element.
       return;
     }
     if (previous != value) {
@@ -211,7 +211,7 @@ class _NestedHookElement extends StatelessElement {
   @override
   void mount(Element? parent) {
     component.owner.nodes.add(this);
-    _wrappedChild = component.wrappedWidget;
+    _wrappedChild = component.wrappedComponent;
     _injectedChild = component.injectedChild;
     super.mount(parent);
   }
@@ -230,7 +230,7 @@ class _NestedHookElement extends StatelessElement {
 
 /// A [StatefulComponent] that is compatible with [Nested].
 abstract class SingleChildStatefulComponent extends StatefulComponent implements SingleChildComponent {
-  /// Creates a widget that has exactly one child widget.
+  /// Creates a component that has exactly one child component.
   const SingleChildStatefulComponent({Key? key, Component? child})
       : _child = child,
         super(key: key);
@@ -251,7 +251,7 @@ abstract class SingleChildState<T extends SingleChildStatefulComponent> extends 
   ///
   /// This method may be called with a `child` different from the parameter
   /// passed to the constructor of [SingleChildStatelessComponent].
-  /// It may also be called again with a different `child`, without this widget
+  /// It may also be called again with a different `child`, without this component
   /// being recreated.
   Iterable<Component> buildWithChild(BuildContext context, Component? child);
 
@@ -261,8 +261,8 @@ abstract class SingleChildState<T extends SingleChildStatefulComponent> extends 
 
 /// An [Element] that uses a [SingleChildStatefulComponent] as its configuration.
 class SingleChildStatefulElement extends StatefulElement with _SingleChildComponentElementMixin {
-  /// Creates an element that uses the given widget as its configuration.
-  SingleChildStatefulElement(SingleChildStatefulComponent widget) : super(widget);
+  /// Creates an element that uses the given component as its configuration.
+  SingleChildStatefulElement(SingleChildStatefulComponent component) : super(component);
 
   @override
   SingleChildStatefulComponent get component => super.component as SingleChildStatefulComponent;
@@ -285,7 +285,7 @@ class SingleChildStatefulElement extends StatefulElement with _SingleChildCompon
 ///
 /// Its [build] method must **not** be overriden. Instead use [buildWithChild].
 abstract class SingleChildStatelessComponent extends StatelessComponent implements SingleChildComponent {
-  /// Creates a widget that has exactly one child widget.
+  /// Creates a component that has exactly one child component.
   const SingleChildStatelessComponent({Key? key, Component? child})
       : _child = child,
         super(key: key);
@@ -296,7 +296,7 @@ abstract class SingleChildStatelessComponent extends StatelessComponent implemen
   ///
   /// This method may be called with a `child` different from the parameter
   /// passed to the constructor of [SingleChildStatelessComponent].
-  /// It may also be called again with a different `child`, without this widget
+  /// It may also be called again with a different `child`, without this component
   /// being recreated.
   Iterable<Component> buildWithChild(BuildContext context, Component? child);
 
@@ -311,8 +311,8 @@ abstract class SingleChildStatelessComponent extends StatelessComponent implemen
 
 /// An [Element] that uses a [SingleChildStatelessComponent] as its configuration.
 class SingleChildStatelessElement extends StatelessElement with _SingleChildComponentElementMixin {
-  /// Creates an element that uses the given widget as its configuration.
-  SingleChildStatelessElement(SingleChildStatelessComponent widget) : super(widget);
+  /// Creates an element that uses the given component as its configuration.
+  SingleChildStatelessElement(SingleChildStatelessComponent component) : super(component);
 
   @override
   Iterable<Component> build() {

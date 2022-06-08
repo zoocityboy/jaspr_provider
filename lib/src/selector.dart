@@ -40,10 +40,10 @@ class Selector0<T> extends SingleChildStatefulComponent {
   })  : _shouldRebuild = shouldRebuild,
         super(key: key, child: child);
 
-  /// A function that builds a widget tree from `child` and the last result of
+  /// A function that builds a component tree from `child` and the last result of
   /// [selector].
   ///
-  /// [builder] will be called again whenever the its parent widget asks for an
+  /// [builder] will be called again whenever the its parent component asks for an
   /// update, or if [selector] return a value that is different from the
   /// previous one using [operator==].
   ///
@@ -67,18 +67,18 @@ class Selector0<T> extends SingleChildStatefulComponent {
 class _Selector0State<T> extends SingleChildState<Selector0<T>> {
   T? value;
   Iterable<Component>? cache;
-  Component? oldWidget;
+  Component? oldComponent;
 
   @override
   Iterable<Component> buildWithChild(BuildContext context, Component? child) {
     final selected = component.selector(context);
 
-    final shouldInvalidateCache = oldWidget != component ||
+    final shouldInvalidateCache = oldComponent != component ||
         (component._shouldRebuild != null && component._shouldRebuild!(value as T, selected)) ||
         (component._shouldRebuild == null && !const DeepCollectionEquality().equals(value, selected));
     if (shouldInvalidateCache) {
       value = selected;
-      oldWidget = component;
+      oldComponent = component;
       cache = component.builder(
         context,
         selected,
@@ -116,7 +116,7 @@ class _Selector0State<T> extends SingleChildState<Selector0<T>> {
 /// ```dart
 /// Selector<Foo, Tuple2<Bar, Baz>>(
 ///   selector: (_, foo) => Tuple2(foo.bar, foo.baz),
-///   builder: (_, data, __) {
+///   builder: (_, data, __) sync* {
 ///     yield Text('${data.item1}  ${data.item2}');
 ///   }
 /// )

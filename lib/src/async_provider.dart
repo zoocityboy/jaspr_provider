@@ -47,7 +47,7 @@ $error
 
 /// Listens to a [Stream] and exposes its content to `child` and descendants.
 ///
-/// Its main use-case is to provide to a large number of a widget the content
+/// Its main use-case is to provide to a large number of a component the content
 /// of a [Stream], without caring about reacting to events.
 /// A typical example would be to expose the battery level, or a Firebase query.
 ///

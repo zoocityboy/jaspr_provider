@@ -98,7 +98,7 @@ import 'proxy_provider.dart';
 class ChangeNotifierProvider<T extends ChangeNotifier?>
     extends ListenableProvider<T> {
   /// Creates a [ChangeNotifier] using `create` and automatically
-  /// disposes it when [ChangeNotifierProvider] is removed from the widget tree.
+  /// disposes it when [ChangeNotifierProvider] is removed from the component tree.
   ///
   /// `create` must not be `null`.
   ChangeNotifierProvider({

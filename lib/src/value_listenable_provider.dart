@@ -62,18 +62,18 @@ class ValueListenableProvider<T> extends StatelessComponent {
 /// Builds a [Component] when given a concrete value of a [ValueListenable<T>].
 ///
 /// If the `child` parameter provided to the [ValueListenableBuilder] is not
-/// null, the same `child` widget is passed back to this [ValueComponentBuilder]
-/// and should typically be incorporated in the returned widget tree.
+/// null, the same `child` component is passed back to this [ValueComponentBuilder]
+/// and should typically be incorporated in the returned component tree.
 ///
 /// See also:
 ///
-///  * [ValueListenableBuilder], a widget which invokes this builder each time
+///  * [ValueListenableBuilder], a component which invokes this builder each time
 ///    a [ValueListenable] changes value.
 typedef ValueComponentBuilder<T> = Iterable<Component> Function(BuildContext context, T value, Component? child);
 
-/// A widget whose content stays synced with a [ValueListenable].
+/// A component whose content stays synced with a [ValueListenable].
 ///
-/// Given a [ValueListenable<T>] and a [builder] which builds widgets from
+/// Given a [ValueListenable<T>] and a [builder] which builds components from
 /// concrete values of `T`, this class will automatically register itself as a
 /// listener of the [ValueListenable] and call the [builder] with updated values
 /// when the value changes.
@@ -99,7 +99,7 @@ typedef ValueComponentBuilder<T> = Iterable<Component> Function(BuildContext con
 /// setting state on the whole `Scaffold` in the default `flutter create` app.
 ///
 /// ```dart
-/// class MyHomePage extends StatefulWidget {
+/// class MyHomePage extends StatefulComponent {
 ///   const MyHomePage({Key? key, required this.title}) : super(key: key);
 ///   final String title;
 ///
@@ -109,25 +109,25 @@ typedef ValueComponentBuilder<T> = Iterable<Component> Function(BuildContext con
 ///
 /// class _MyHomePageState extends State<MyHomePage> {
 ///   final ValueNotifier<int> _counter = ValueNotifier<int>(0);
-///   final Widget goodJob = const Text('Good job!');
+///   final Component goodJob = const Text('Good job!');
 ///   @override
 ///   Iterable<Component> build(BuildContext context) {
 ///     return Scaffold(
 ///       appBar: AppBar(
-///         title: Text(widget.title)
+///         title: Text(component.title)
 ///       ),
 ///       body: Center(
 ///         child: Column(
 ///           mainAxisAlignment: MainAxisAlignment.center,
-///           children: <Widget>[
+///           children: <Component>[
 ///             const Text('You have pushed the button this many times:'),
 ///             ValueListenableBuilder<int>(
-///               builder: (BuildContext context, int value, Widget? child) sync* {
+///               builder: (BuildContext context, int value, Component? child) sync* {
 ///                 // This builder will only get called when the _counter
 ///                 // is updated.
 ///                 return Row(
 ///                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-///                   children: <Widget>[
+///                   children: <Component>[
 ///                     Text('$value'),
 ///                     child!,
 ///                   ],
@@ -160,7 +160,7 @@ class ValueListenableBuilder<T> extends StatefulComponent {
   /// Creates a [ValueListenableBuilder].
   ///
   /// The [valueListenable] and [builder] arguments must not be null.
-  /// The [child] is optional but is good practice to use if part of the widget
+  /// The [child] is optional but is good practice to use if part of the component
   /// subtree does not depend on the value of the [valueListenable].
   const ValueListenableBuilder({
     Key? key,
@@ -171,27 +171,27 @@ class ValueListenableBuilder<T> extends StatefulComponent {
 
   /// The [ValueListenable] whose value you depend on in order to build.
   ///
-  /// This widget does not ensure that the [ValueListenable]'s value is not
+  /// This component does not ensure that the [ValueListenable]'s value is not
   /// null, therefore your [builder] may need to handle null values.
   ///
   /// This [ValueListenable] itself must not be null.
   final ValueListenable<T> valueListenable;
 
-  /// A [ValueComponentBuilder] which builds a widget depending on the
+  /// A [ValueComponentBuilder] which builds a component depending on the
   /// [valueListenable]'s value.
   ///
-  /// Can incorporate a [valueListenable] value-independent widget subtree
-  /// from the [child] parameter into the returned widget tree.
+  /// Can incorporate a [valueListenable] value-independent component subtree
+  /// from the [child] parameter into the returned component tree.
   ///
   /// Must not be null.
   final ValueComponentBuilder<T> builder;
 
-  /// A [valueListenable]-independent widget which is passed back to the [builder].
+  /// A [valueListenable]-independent component which is passed back to the [builder].
   ///
-  /// This argument is optional and can be null if the entire widget subtree
+  /// This argument is optional and can be null if the entire component subtree
   /// the [builder] builds depends on the value of the [valueListenable]. For
   /// example, if the [valueListenable] is a [String] and the [builder] simply
-  /// returns a [Text] widget with the [String] value.
+  /// returns a [Text] component with the [String] value.
   final Component? child;
 
   @override
@@ -209,13 +209,13 @@ class _ValueListenableBuilderState<T> extends State<ValueListenableBuilder<T>> {
   }
 
   @override
-  void didUpdateComponent(ValueListenableBuilder<T> oldWidget) {
-    if (oldWidget.valueListenable != component.valueListenable) {
-      oldWidget.valueListenable.removeListener(_valueChanged);
+  void didUpdateComponent(ValueListenableBuilder<T> oldComponent) {
+    if (oldComponent.valueListenable != component.valueListenable) {
+      oldComponent.valueListenable.removeListener(_valueChanged);
       value = component.valueListenable.value;
       component.valueListenable.addListener(_valueChanged);
     }
-    super.didUpdateComponent(oldWidget);
+    super.didUpdateComponent(oldComponent);
   }
 
   @override

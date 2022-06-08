@@ -321,7 +321,7 @@ void main() {
             error,
             isA<ProviderNotFoundException>()
                 .having((err) => err.valueType, 'valueType', String)
-                .having((err) => err.widgetType, 'widgetType', Builder),
+                .having((err) => err.componentType, 'widgetType', Builder),
           );
         },
       );
