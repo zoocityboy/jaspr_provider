@@ -1,4 +1,8 @@
 <!-- Add codecov tag later -->
+<p align="center">
+  <a href="https://pub.dev/packages/jaspr_provider"><img src="https://img.shields.io/pub/v/jaspr_provider.svg" alt="Pub"></a>
+</p>
+
 A port of Flutter's [Provider](https://pub.dev/packages/provider) package to [jaspr](https://pub.dev/packages/jaspr).
 
 A wrapper around [InheritedComponent]
@@ -13,7 +17,7 @@ By using `jaspr_provider` instead of manually writing [InheritedComponent], you 
 - increased scalability for classes with a listening mechanism that grows exponentially
   in complexity (such as [ChangeNotifier], which is O(N) for dispatching notifications).
 
-To read more about a `provider`, see its [documentation](https://pub.dev/documentation/provider/latest/provider/provider-library.html).
+To read more about a `provider`, see its [documentation](https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/jaspr_provider-library.html).
 
 See also:
 
@@ -165,9 +169,9 @@ Alternatively, instead of using these methods, we can use [Consumer] and [Select
 These can be useful for performance optimizations or when it is difficult to
 obtain a `BuildContext` descendant of the provider.
 
-See the [FAQ](https://github.com/rrousselGit/provider#my-widget-rebuilds-too-often-what-can-i-do)
-or the documentation of [Consumer](https://pub.dev/documentation/provider/latest/provider/Consumer-class.html)
-and [Selector](https://pub.dev/documentation/provider/latest/provider/Selector-class.html)
+See the [FAQ](https://github.com/Maksimka101/jaspr_provider#my-component-rebuilds-too-often-what-can-i-do)
+or the documentation of [Consumer](https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Consumer-class.html)
+and [Selector](https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Selector-class.html)
 for more information.
 
 ### Optionally depending on a provider
@@ -554,16 +558,16 @@ ChangeNotifierProvider<ProviderInterface>(
 
 `provider` exposes a few different kinds of "provider" for different types of objects.
 
-The complete list of all the objects available is [here](https://pub.dev/documentation/jaspr_provider/latest/provider/jaspr_provider-library.html)
+The complete list of all the objects available is [here](https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/jaspr_provider-library.html)
 
 | name                                                                                                                          | description                                                                                                                                                            |
 | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [Provider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/Provider-class.html)                               | The most basic form of provider. It takes a value and exposes it, whatever the value is.                                                                               |
-| [ListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ListenableProvider-class.html)           | A specific provider for Listenable object. ListenableProvider will listen to the object and ask components which depend on it to rebuild whenever the listener is called. |
-| [ChangeNotifierProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ChangeNotifierProvider-class.html)   | A specification of ListenableProvider for ChangeNotifier. It will automatically call `ChangeNotifier.dispose` when needed.                                             |
-| [ValueListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/ValueListenableProvider-class.html) | Listen to a ValueListenable and only expose `ValueListenable.value`.                                                                                                   |
-| [StreamProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/StreamProvider-class.html)                   | Listen to a Stream and expose the latest value emitted.                                                                                                                |
-| [FutureProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/provider/FutureProvider-class.html)                   | Takes a `Future` and updates dependents when the future completes.                                                                                                     |
+| [Provider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/Provider-class.html)                               | The most basic form of provider. It takes a value and exposes it, whatever the value is.                                                                               |
+| [ListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/ListenableProvider-class.html)           | A specific provider for Listenable object. ListenableProvider will listen to the object and ask components which depend on it to rebuild whenever the listener is called. |
+| [ChangeNotifierProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/ChangeNotifierProvider-class.html)   | A specification of ListenableProvider for ChangeNotifier. It will automatically call `ChangeNotifier.dispose` when needed.                                             |
+| [ValueListenableProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/ValueListenableProvider-class.html) | Listen to a ValueListenable and only expose `ValueListenable.value`.                                                                                                   |
+| [StreamProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/StreamProvider-class.html)                   | Listen to a Stream and expose the latest value emitted.                                                                                                                |
+| [FutureProvider](https://pub.dartlang.org/documentation/jaspr_provider/latest/jaspr_provider/FutureProvider-class.html)                   | Takes a `Future` and updates dependents when the future completes.                                                                                                     |
 
 ### My application throws a StackOverflowError because I have too many providers, what can I do?
 
@@ -609,10 +613,10 @@ In this situation, you have a few solutions:
   `MultiProvider` works by adding a component between every providers. Not using `MultiProvider` can
   increase the limit before a `StackOverflowError` is reached.
 
-[provider.of]: https://pub.dev/documentation/jaspr_provider/latest/provider/Provider/of.html
-[selector]: https://pub.dev/documentation/jaspr_provider/latest/provider/Selector-class.html
-[consumer]: https://pub.dev/documentation/jaspr_provider/latest/provider/Consumer-class.html
+[provider.of]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Provider/of.html
+[selector]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Selector-class.html
+[consumer]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Consumer-class.html
 [changenotifier]: https://pub.dev/documentation/jaspr/latest/jaspr_server/ChangeNotifier-class.html
 [inheritedcomponent]: https://pub.dev/documentation/jaspr/latest/jaspr_server/InheritedComponent-class.html
-[inheritedprovider]: https://pub.dev/documentation/jaspr_provider/latest/provider/InheritedProvider-class.html
+[inheritedprovider]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/InheritedProvider-class.html
 [buildcontext]: https://pub.dev/documentation/jaspr/latest/jaspr_server/BuildContext-class.html
