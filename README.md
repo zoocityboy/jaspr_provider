@@ -612,6 +612,14 @@ In this situation, you have a few solutions:
 - Consider opting out of using `MultiProvider`.
   `MultiProvider` works by adding a component between every providers. Not using `MultiProvider` can
   increase the limit before a `StackOverflowError` is reached.
+  
+## Port road map:
+- [x] Port Flutter code to the Jaspr
+- [x] Port documentation
+- [ ] Port tests
+  - Tests are ported and major part of them are working. 
+    However some of them are not working because of problems in
+    `jaspr_test` package
 
 [provider.of]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Provider/of.html
 [selector]: https://pub.dev/documentation/jaspr_provider/latest/jaspr_provider/Selector-class.html
