@@ -69,5 +69,9 @@ export 'src/selector.dart'
         Selector6,
         ShouldRebuild;
 export 'src/single_child_stateless_component.dart'
-    show SingleChildComponent, Nested;
+    show
+        SingleChildComponent,
+        Nested,
+        SingleChildStatefulComponent,
+        SingleChildStatelessComponent;
 export 'src/value_listenable_provider.dart' show ValueListenableProvider;

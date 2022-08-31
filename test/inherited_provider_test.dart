@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_provider/jaspr_provider.dart';
 import 'package:jaspr_provider/src/provider.dart';
-import 'package:jaspr_provider/src/single_child_stateless_component.dart';
 import 'package:jaspr_test/jaspr_test.dart';
 // ignore: import_of_legacy_library_into_null_safe
 import 'package:mockito/mockito.dart';
