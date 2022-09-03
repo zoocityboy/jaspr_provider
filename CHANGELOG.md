@@ -1,3 +1,5 @@
+# 0.0.3
+- Export `SingleChildStatefulComponent` and `SingleChildStatelessComponent`
 # 0.0.2
 - Update README
   - Fix links 
